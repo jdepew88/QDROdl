@@ -29,17 +29,6 @@ export default function CalPERSGuide() {
         </div>
       </main>
 
-      <main className="pt-20 min-h-screen bg-neutral-950 bg-opacity-80">
-        <HeroSection />
-
-        <div className="px-6 pt-0 pb-24 mx-auto my-0 max-w-[1200px]">
-          <OverviewSection />
-          <DROModelsSection />
-          <ChoosingModelSection />
-          <CTASection />
-        </div>
-      </main>
-
       <Footer />
     </div>
   );
