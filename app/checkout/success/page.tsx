@@ -1,0 +1,1 @@
+export default function SuccessPage(){return(<main className="mx-auto max-w-3xl px-4 py-12"><h1 className="text-3xl font-bold mb-4">Thanks — Joinder Ordered</h1><p className="text-gray-700">We’ve received your order. You’ll get an email with next steps.</p></main>);}

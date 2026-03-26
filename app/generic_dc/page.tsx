@@ -1,0 +1,41 @@
+"use client";
+
+import Link from "next/link";
+
+export default function GenericDcPage() {
+  return (
+    <main className="mx-auto max-w-3xl px-4 py-16">
+      <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">
+        Defined contribution
+      </p>
+      <h1 className="mt-2 text-3xl font-bold text-zinc-900">
+        401(k), 403(b), 457(b), and similar plans
+      </h1>
+      <p className="mt-4 text-zinc-600 leading-relaxed">
+        Many DC plans accept qualified domestic relations orders or similar
+        alternate payee provisions. QDROdl’s generic defined-contribution path
+        will collect plan-administrator requirements and produce
+        plan-appropriate draft orders.
+      </p>
+      <div className="mt-8 rounded-2xl border border-sky-200 bg-sky-50 p-5 text-sm text-sky-950">
+        Detailed model pages for specific recordkeepers can branch from here as
+        you add them. Intake already supports selecting multiple plans,
+        including MPI IAP and County of LA 457.
+      </div>
+      <div className="mt-10 flex flex-wrap gap-4">
+        <Link
+          href="/intake/plans"
+          className="rounded-xl bg-zinc-900 px-5 py-3 text-sm font-medium text-white hover:bg-zinc-800"
+        >
+          Start intake
+        </Link>
+        <Link
+          href="/plans"
+          className="rounded-xl border border-zinc-300 px-5 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
+        >
+          All plans
+        </Link>
+      </div>
+    </main>
+  );
+}

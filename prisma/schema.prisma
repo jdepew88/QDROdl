@@ -1,0 +1,75 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Matter {
+  id                     String    @id @default(cuid())
+  caseNumber             String
+  county                 String
+  otherCounty            String?
+  dom                    DateTime
+  dos                    DateTime
+  doj                    DateTime?
+  concurrentWithJudgment Boolean   @default(false)
+
+  petitionerId String
+  respondentId String
+  petitioner   Party  @relation("Petitioner", fields: [petitionerId], references: [id])
+  respondent   Party  @relation("Respondent", fields: [respondentId], references: [id])
+
+  plans     PlanSelection[]
+  attorneys AttorneyInfo[]
+
+  petitionerIsMember Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Party {
+  id         String  @id @default(cuid())
+  role       String
+  firstName  String
+  lastName   String
+  email      String
+  phone      String?
+  address1   String
+  address2   String?
+  dobEnc     String?
+  ssnEnc     String?
+  spouseType String?
+
+  petitionerMatters Matter[] @relation("Petitioner")
+  respondentMatters Matter[] @relation("Respondent")
+}
+
+model PlanSelection {
+  id       String @id @default(cuid())
+  matterId String
+  matter   Matter @relation(fields: [matterId], references: [id])
+
+  planKey         String
+  isInPayStatus   Boolean  @default(false)
+  usesTimeRule    Boolean?
+  laceraOption4   Boolean?
+  chosenTemplates String
+}
+
+model AttorneyInfo {
+  id       String @id @default(cuid())
+  matterId String
+  matter   Matter @relation(fields: [matterId], references: [id])
+
+  side      String
+  name      String
+  barNumber String?
+  email     String?
+  phone     String?
+  address1  String?
+  address2  String?
+}
