@@ -96,6 +96,12 @@ export default function Header() {
             FAQ
           </a>
           <Link
+            href="/dash"
+            className="rounded-lg px-3 py-2 text-base no-underline text-slate-300 transition-colors hover:bg-white/5"
+          >
+            Dashboard
+          </Link>
+          <Link
             href="/get-started"
             className="rounded-lg border-none bg-neutral-200 px-6 py-3 text-base font-[510] no-underline text-zinc-950"
           >
