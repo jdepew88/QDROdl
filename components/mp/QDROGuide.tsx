@@ -7,11 +7,10 @@ import Footer from "./Footer";
 
 export default function QDROGuide() {
   return (
-    <div>
-      <div className="flex flex-row">
-        <main className="mb-52 min-h-screen bg-neutral-950 bg-opacity-80">
-          <HeroSection />
-          <div className="px-6 pt-0 pb-24 mx-auto my-0 max-w-[1200px]">
+    <div className="w-full">
+      <main className="mb-52 min-h-screen w-full bg-zinc-950">
+        <HeroSection />
+        <div className="mx-auto my-0 max-w-[1200px] px-6 pb-24 pt-0">
             <section className="mb-24">
               <div className="grid gap-16 items-center mb-16 grid-cols-[1fr_1fr] max-md:gap-10 max-md:grid-cols-[1fr]">
                 <div>
@@ -55,8 +54,7 @@ export default function QDROGuide() {
             <ChoosingMethod />
             <CallToAction />
           </div>
-        </main>
-      </div>
+      </main>
       <Footer />
     </div>
   );

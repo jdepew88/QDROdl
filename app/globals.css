@@ -5,3 +5,9 @@
 html {
   height: 100%;
 }
+
+/* Fallback if Tailwind fails to load (stale .next, wrong dev server, etc.) */
+body {
+  background-color: #09090b;
+  color: #fafaf9;
+}

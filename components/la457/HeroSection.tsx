@@ -2,7 +2,7 @@ import * as React from "react";
 
 function HeroSection() {
   return (
-    <section className="px-6 py-16 text-center bg-[linear-gradient(135deg,rgba(93,41,190,0.1),rgba(72,161,255,0.1))]">
+    <section className="w-full px-6 py-16 text-center bg-[linear-gradient(135deg,rgba(93,41,190,0.1),rgba(72,161,255,0.1))]">
       <div className="mx-auto my-0 max-w-[1200px]">
         <h1 className="mb-6 text-6xl font-bold leading-tight text-white max-md:text-4xl max-sm:text-3xl">
           LA County Deferred Compensation QDRO Guide

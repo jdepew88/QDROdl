@@ -9,6 +9,7 @@ export type PlanSlug =
   | "la457"
   | "mp"
   | "generic_dc"
+  | "generic_db"
   | "federal"
   | "joinders";
 
@@ -58,6 +59,13 @@ export const PLAN_ROUTE_ENTRIES: PlanRouteEntry[] = [
     navLabel: "Generic Defined Contribution",
     documentTitle: "Generic defined contribution",
     description: "401(k), 403(b), and similar DC plans",
+  },
+  {
+    slug: "generic_db",
+    navLabel: "Generic Defined Benefit",
+    documentTitle: "Generic defined benefit (pensions)",
+    description:
+      "Traditional pension-style plans that pay a monthly benefit from a formula",
   },
   {
     slug: "federal",

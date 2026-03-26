@@ -13,6 +13,7 @@ import La457Guide from "@/components/la457/QDROGuide";
 import MpGuide from "@/components/mp/QDROGuide";
 import JoindersContent from "@/components/joinders/JoindersContent";
 import GenericDcPlanPage from "@/components/plan/GenericDcPlanPage";
+import GenericDbPlanPage from "@/components/plan/GenericDbPlanPage";
 import FederalPlanPage from "@/components/plan/FederalPlanPage";
 
 const PLAN_COMPONENTS: Record<PlanSlug, ComponentType> = {
@@ -22,6 +23,7 @@ const PLAN_COMPONENTS: Record<PlanSlug, ComponentType> = {
   la457: La457Guide,
   mp: MpGuide,
   generic_dc: GenericDcPlanPage,
+  generic_db: GenericDbPlanPage,
   federal: FederalPlanPage,
   joinders: JoindersContent,
 };

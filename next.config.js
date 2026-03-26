@@ -1,6 +1,20 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
   experimental: { serverComponentsExternalPackages: ["archiver"] },
+  async headers() {
+    if (process.env.NODE_ENV !== "development") return [];
+    return [
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate, max-age=0",
+          },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       { source: "/calpers", destination: "/plan/calpers", permanent: true },

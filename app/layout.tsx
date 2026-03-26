@@ -32,7 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full w-full bg-zinc-950 text-zinc-900 antialiased">
+      <body className="min-h-full w-full bg-zinc-950 text-stone-50 antialiased">
         <Header />
         <div className="pt-28">{children}</div>
       </body>
