@@ -15,7 +15,6 @@ import JoindersContent from "@/components/joinders/JoindersContent";
 import GenericDcPlanPage from "@/components/plan/GenericDcPlanPage";
 import GenericDbPlanPage from "@/components/plan/GenericDbPlanPage";
 import FederalPlanPage from "@/components/plan/FederalPlanPage";
-import MotPic2PlanPage from "@/components/plan/MotPic2PlanPage";
 
 const PLAN_COMPONENTS: Record<PlanSlug, ComponentType> = {
   calpers: CalPERSGuide,
@@ -23,7 +22,6 @@ const PLAN_COMPONENTS: Record<PlanSlug, ComponentType> = {
   lacera: LaceraGuide,
   la457: La457Guide,
   mp: MpGuide,
-  motpic2: MotPic2PlanPage,
   generic_dc: GenericDcPlanPage,
   generic_db: GenericDbPlanPage,
   federal: FederalPlanPage,
