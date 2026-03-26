@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 export default function Footer() {
   const services = [
@@ -89,18 +90,18 @@ export default function Footer() {
             © 2025 QDROdl.app All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a
-              href="#"
+            <Link
+              href="/privacy"
               className="text-sm no-underline text-neutral-400 hover:text-slate-300"
             >
               Privacy Policy
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/tos"
               className="text-sm no-underline text-neutral-400 hover:text-slate-300"
             >
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </div>

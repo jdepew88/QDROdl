@@ -8,7 +8,6 @@ import TestimonialsSection from "./TestimonialsSection";
 import FAQSection from "./FAQSection";
 import DownloadsSection from "./DownloadsSection";
 import CTASection from "./CTASection";
-import Footer from "./Footer";
 
 export default function QDROLandingPage() {
   return (
@@ -23,7 +22,6 @@ export default function QDROLandingPage() {
         <DownloadsSection />
         <CTASection />
       </main>
-      <Footer />
     </div>
   );
 }

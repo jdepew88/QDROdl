@@ -3,7 +3,6 @@ import HeroSection from "./HeroSection";
 import DistributionMethods from "./DistributionMethods";
 import ChoosingMethod from "./ChoosingMethod";
 import CallToAction from "./CallToAction";
-import Footer from "./Footer";
 
 export default function QDROGuide() {
   return (
@@ -55,7 +54,6 @@ export default function QDROGuide() {
             <CallToAction />
           </div>
       </main>
-      <Footer />
     </div>
   );
 }

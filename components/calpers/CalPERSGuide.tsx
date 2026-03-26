@@ -4,7 +4,6 @@ import { OverviewSection } from "./OverviewSection";
 import { DROModelsSection } from "./DROModelsSection";
 import { ChoosingModelSection } from "./ChoosingModelSection";
 import { CTASection } from "./CTASection";
-import { Footer } from "./Footer";
 
 export default function CalPERSGuide() {
   return (
@@ -19,8 +18,6 @@ export default function CalPERSGuide() {
           <CTASection />
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

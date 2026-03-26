@@ -29,6 +29,11 @@ module.exports = {
       },
       { source: "/federal", destination: "/plan/federal", permanent: true },
       { source: "/joinders", destination: "/plan/joinders", permanent: true },
+      {
+        source: "/termsofservice",
+        destination: "/tos",
+        permanent: true,
+      },
     ];
   },
 };

@@ -4,7 +4,6 @@ import { IntroductionSection } from "./IntroductionSection";
 import { MethodsSection } from "./MethodsSection";
 import { ConsiderationsSection } from "./ConsiderationsSection";
 import { CallToActionSection } from "./CallToActionSection";
-import { Footer } from "./Footer";
 
 export const LaceraGuide: React.FC = () => {
   return (
@@ -18,7 +17,6 @@ export const LaceraGuide: React.FC = () => {
           <CallToActionSection />
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

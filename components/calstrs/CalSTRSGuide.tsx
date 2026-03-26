@@ -3,7 +3,6 @@ import IntroductionSection from "./IntroductionSection";
 import DROOptionsSection from "./DROOptionsSection";
 import ChoosingModelSection from "./ChoosingModelSection";
 import CallToActionSection from "./CallToActionSection";
-import Footer from "./Footer";
 
 interface CalSTRSGuideProps {}
 
@@ -19,7 +18,6 @@ export default function CalSTRSGuide({}: CalSTRSGuideProps) {
           <CallToActionSection />
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
