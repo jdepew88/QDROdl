@@ -11,8 +11,11 @@ git pull
 
 npm ci
 npx prisma generate
-# After you have migration files from local `npx prisma migrate dev`:
-# npx prisma migrate deploy
+
+if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations 2>/dev/null | wc -l)" -gt 0 ]; then
+  # Apply any committed migrations to the VPS database.
+  npx prisma migrate deploy
+fi
 
 npm run build
 
