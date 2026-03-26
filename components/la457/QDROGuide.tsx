@@ -1,7 +1,4 @@
 "use client";
-import * as React from "react";
-import { useState } from "react";
-import Navigation from "./Navigation";
 import HeroSection from "./HeroSection";
 import DistributionMethods from "./DistributionMethods";
 import ChoosingMethod from "./ChoosingMethod";
@@ -9,29 +6,10 @@ import CallToAction from "./CallToAction";
 import Footer from "./Footer";
 
 function QDROGuide() {
-  const [activeSection, setActiveSection] = useState("overview");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
-  const handleSetActiveSection = (section: string) => {
-    setActiveSection(section);
-    setMobileMenuOpen(false);
-  };
-
   return (
     <div>
-      <Navigation
-        activeSection={activeSection}
-        mobileMenuOpen={mobileMenuOpen}
-        onToggleMobileMenu={toggleMobileMenu}
-        onSetActiveSection={handleSetActiveSection}
-      />
-
       <div className="flex flex-row">
-        <main className="pt-20 mb-52 min-h-screen bg-neutral-950 bg-opacity-80">
+        <main className="mb-52 min-h-screen bg-neutral-950 bg-opacity-80">
           <HeroSection />
 
           <div className="px-6 pt-0 pb-24 mx-auto my-0 max-w-[1200px]">

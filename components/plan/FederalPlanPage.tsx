@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export default function FederalPlansPage() {
+export default function FederalPlanPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-16">
       <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">
@@ -11,7 +11,7 @@ export default function FederalPlansPage() {
       <h1 className="mt-2 text-3xl font-bold text-zinc-900">
         FERS, CSRS, and TSP
       </h1>
-      <p className="mt-4 text-zinc-600 leading-relaxed">
+      <p className="mt-4 leading-relaxed text-zinc-600">
         Federal benefit divisions often involve separate orders or elections
         across FERS/CSRS annuities and the Thrift Savings Plan. QDROdl is
         building guided workflows and model language aligned with federal plan
@@ -30,7 +30,7 @@ export default function FederalPlansPage() {
           Start intake
         </Link>
         <Link
-          href="/plans"
+          href="/all_plans"
           className="rounded-xl border border-zinc-300 px-5 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
         >
           All plans

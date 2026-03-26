@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import Header from "./Header";
 import HeroSection from "./HeroSection";
 import WhatIsQDROSection from "./WhatIsQDROSection";
 import ServicesSection from "./ServicesSection";
@@ -14,7 +13,6 @@ import Footer from "./Footer";
 export default function QDROLandingPage() {
   return (
     <div className="min-h-screen bg-zinc-950">
-      <Header />
       <main>
         <HeroSection />
         <WhatIsQDROSection />

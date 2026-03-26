@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-export default function GenericDcPage() {
+export default function GenericDcPlanPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-16">
       <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">
@@ -11,7 +11,7 @@ export default function GenericDcPage() {
       <h1 className="mt-2 text-3xl font-bold text-zinc-900">
         401(k), 403(b), 457(b), and similar plans
       </h1>
-      <p className="mt-4 text-zinc-600 leading-relaxed">
+      <p className="mt-4 leading-relaxed text-zinc-600">
         Many DC plans accept qualified domestic relations orders or similar
         alternate payee provisions. QDROdl’s generic defined-contribution path
         will collect plan-administrator requirements and produce
@@ -30,7 +30,7 @@ export default function GenericDcPage() {
           Start intake
         </Link>
         <Link
-          href="/plans"
+          href="/all_plans"
           className="rounded-xl border border-zinc-300 px-5 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
         >
           All plans
