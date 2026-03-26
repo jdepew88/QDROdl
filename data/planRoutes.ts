@@ -8,6 +8,7 @@ export type PlanSlug =
   | "lacera"
   | "la457"
   | "mp"
+  | "motpic2"
   | "generic_dc"
   | "generic_db"
   | "federal"
@@ -53,6 +54,12 @@ export const PLAN_ROUTE_ENTRIES: PlanRouteEntry[] = [
     navLabel: "Motion Picture Plan",
     documentTitle: "Motion Picture Industry plans",
     description: "MPI pension (DB) and IAP (DC) models",
+  },
+  {
+    slug: "motpic2",
+    navLabel: "Motion Picture Plan v2",
+    documentTitle: "Motion Picture Industry plans v2",
+    description: "Alternative MP guide page for pension and IAP division",
   },
   {
     slug: "generic_dc",
