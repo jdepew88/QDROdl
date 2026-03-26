@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import Header from "@/components/Header";
 
 const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://qdrodl.app"
@@ -31,8 +32,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full w-full bg-white text-zinc-900 antialiased">
-        {children}
+      <body className="min-h-full w-full bg-zinc-950 text-zinc-900 antialiased">
+        <Header />
+        <div className="pt-28">{children}</div>
       </body>
     </html>
   );
