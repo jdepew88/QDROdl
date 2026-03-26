@@ -34,6 +34,24 @@ const services: ServiceCard[] = [
       "County of Los Angeles deferred compensation plan benefit divisions.",
   },
   {
+    slug: "lacers",
+    title: "LACERS",
+    description:
+      "Los Angeles City Employees' Retirement System pension benefit divisions.",
+  },
+  {
+    slug: "city_la_457",
+    title: "City of LA Deferred Compensation",
+    description:
+      "City of Los Angeles deferred compensation plan division support and drafting.",
+  },
+  {
+    slug: "fire_police_pension",
+    title: "LA Fire and Police Pension",
+    description:
+      "Los Angeles Fire and Police Pension benefit and survivor benefit divisions.",
+  },
+  {
     slug: "mp",
     title: "Motion Picture Plan",
     description:

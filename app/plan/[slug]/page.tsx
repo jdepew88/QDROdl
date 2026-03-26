@@ -15,12 +15,18 @@ import JoindersContent from "@/components/joinders/JoindersContent";
 import GenericDcPlanPage from "@/components/plan/GenericDcPlanPage";
 import GenericDbPlanPage from "@/components/plan/GenericDbPlanPage";
 import FederalPlanPage from "@/components/plan/FederalPlanPage";
+import LacersPlanPage from "@/components/plan/LacersPlanPage";
+import CityLa457PlanPage from "@/components/plan/CityLa457PlanPage";
+import FirePolicePensionPlanPage from "@/components/plan/FirePolicePensionPlanPage";
 
 const PLAN_COMPONENTS: Record<PlanSlug, ComponentType> = {
   calpers: CalPERSGuide,
   calstrs: CalSTRSGuide,
   lacera: LaceraGuide,
   la457: La457Guide,
+  lacers: LacersPlanPage,
+  city_la_457: CityLa457PlanPage,
+  fire_police_pension: FirePolicePensionPlanPage,
   mp: MpGuide,
   generic_dc: GenericDcPlanPage,
   generic_db: GenericDbPlanPage,

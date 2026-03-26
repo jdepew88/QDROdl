@@ -7,6 +7,9 @@ export type PlanSlug =
   | "calstrs"
   | "lacera"
   | "la457"
+  | "lacers"
+  | "city_la_457"
+  | "fire_police_pension"
   | "mp"
   | "generic_dc"
   | "generic_db"
@@ -47,6 +50,24 @@ export const PLAN_ROUTE_ENTRIES: PlanRouteEntry[] = [
     navLabel: "Co LA Deferred Comp",
     documentTitle: "County of LA Deferred Compensation",
     description: "457(b) and related deferred compensation",
+  },
+  {
+    slug: "lacers",
+    navLabel: "LACERS",
+    documentTitle: "Los Angeles City Employees' Retirement System",
+    description: "City of Los Angeles civilian pension benefit divisions",
+  },
+  {
+    slug: "city_la_457",
+    navLabel: "City of LA Deferred Compensation",
+    documentTitle: "City of Los Angeles Deferred Compensation",
+    description: "City of Los Angeles deferred compensation plan divisions",
+  },
+  {
+    slug: "fire_police_pension",
+    navLabel: "LA Fire and Police Pension",
+    documentTitle: "Los Angeles Fire and Police Pension",
+    description: "LAFPP pension benefit division and survivor benefit orders",
   },
   {
     slug: "mp",
