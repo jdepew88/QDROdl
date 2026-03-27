@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 import {
-  getAccountCookieName,
   getAuthCookieName,
+  normalizeEmail,
   signSession,
-  validateCredentials,
+  validateEnvCredentials,
 } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -13,7 +15,7 @@ export const revalidate = 0;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const email = String(body?.email || "");
+    const email = normalizeEmail(String(body?.email || ""));
     const password = String(body?.password || "");
 
     if (!email || !password) {
@@ -23,12 +25,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const accountCookie = req.cookies.get(getAccountCookieName())?.value || null;
-    if (!validateCredentials(email, password, accountCookie)) {
-      return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+    if (validateEnvCredentials(email, password)) {
+      const token = signSession(email);
+      const res = NextResponse.json({ ok: true }, { status: 200 });
+      res.cookies.set(getAuthCookieName(), token, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+      return res;
     }
 
-    const token = signSession(email);
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+    }
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) {
+      return NextResponse.json({ error: "Invalid credentials." }, { status: 401 });
+    }
+    if (!user.emailVerifiedAt) {
+      return NextResponse.json(
+        { error: "Please verify your email before signing in." },
+        { status: 403 },
+      );
+    }
+
+    const token = signSession(user.email);
     const res = NextResponse.json({ ok: true }, { status: 200 });
     res.cookies.set(getAuthCookieName(), token, {
       httpOnly: true,

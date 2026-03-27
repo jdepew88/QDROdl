@@ -15,10 +15,12 @@ export default function RegisterClient() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     if (password !== confirm) {
       setError("Passwords do not match.");
       return;
@@ -38,7 +40,13 @@ export default function RegisterClient() {
         json = null;
       }
       if (!res.ok) throw new Error(json?.error || `Register failed (HTTP ${res.status})`);
-      router.push(safeNext);
+      setSuccess(
+        String(
+          json?.message ||
+            "Thanks for registering. Please verify your email, then sign in.",
+        ),
+      );
+      router.push(`/login?registered=1&next=${encodeURIComponent(safeNext)}`);
       router.refresh();
     } catch (e: any) {
       setError(e?.message || "Registration failed.");
@@ -95,6 +103,11 @@ export default function RegisterClient() {
           {error && (
             <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
               {error}
+            </div>
+          )}
+          {success && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
+              {success}
             </div>
           )}
 

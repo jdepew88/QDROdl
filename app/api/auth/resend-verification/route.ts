@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
-import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashVerificationToken, normalizeEmail } from "@/lib/auth";
 import { sendVerificationEmail } from "@/lib/mailer";
@@ -13,37 +12,32 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const email = normalizeEmail(String(body?.email || ""));
-    const password = String(body?.password || "");
+    if (!email) {
+      return NextResponse.json({ error: "Email is required." }, { status: 400 });
+    }
 
-    if (!email || !password) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
       return NextResponse.json(
-        { error: "Email and password are required." },
+        { error: "No account found for this email." },
+        { status: 404 },
+      );
+    }
+    if (user.emailVerifiedAt) {
+      return NextResponse.json(
+        { error: "Email is already verified. Please sign in." },
         { status: 400 },
       );
     }
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters." },
-        { status: 400 },
-      );
-    }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 },
-      );
-    }
-
-    const passwordHash = await bcrypt.hash(password, 12);
     const tokenPlain = randomBytes(32).toString("hex");
     const tokenHash = hashVerificationToken(tokenPlain);
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
 
     await prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: { email, passwordHash },
+      await tx.emailVerificationToken.updateMany({
+        where: { userId: user.id, consumedAt: null },
+        data: { consumedAt: new Date() },
       });
       await tx.emailVerificationToken.create({
         data: { userId: user.id, tokenHash, expiresAt },
@@ -55,12 +49,12 @@ export async function POST(req: NextRequest) {
       ok: true,
       emailSent: emailResult.sent,
       message: emailResult.sent
-        ? "Thanks for registering. Check your inbox to verify your email."
-        : "Account created. SMTP not configured yet, so verification email was not sent.",
+        ? "Verification email sent. Please check your inbox."
+        : "SMTP not configured yet. Verification email was not sent.",
     });
   } catch (e: any) {
     return NextResponse.json(
-      { error: e?.message || "Registration failed." },
+      { error: e?.message || "Could not resend verification email." },
       { status: 500 },
     );
   }
