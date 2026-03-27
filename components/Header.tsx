@@ -10,7 +10,6 @@ import {
   HEADER_LOGO_HEIGHT,
   HEADER_LOGO_WIDTH,
 } from "@/data/headerLogo";
-import LogoutButton from "@/components/LogoutButton";
 
 export default function Header() {
   const pathname = usePathname();
@@ -197,19 +196,18 @@ export default function Header() {
             FAQ
           </a>
           <Link
-            href="/dash"
-            className="rounded-lg px-3 py-2 text-base no-underline text-slate-300 transition-colors hover:bg-white/5"
-          >
-            Dashboard
-          </Link>
-          <Link
             href="/intake/plans"
             className="rounded-lg border-none bg-neutral-200 px-6 py-3 text-base font-[510] no-underline text-zinc-950"
           >
             Get Started
           </Link>
           {authChecked && isAuthenticated ? (
-            <LogoutButton className="mr-4 rounded-lg border-none bg-lime-800 px-6 py-3 text-base font-[510] text-stone-50 transition-[background-color] duration-[0.2s] ease-[ease] hover:bg-lime-700" />
+            <Link
+              href="/dash"
+              className="mr-4 rounded-lg border-none bg-lime-800 px-6 py-3 text-base font-[510] text-stone-50 no-underline transition-[background-color] duration-[0.2s] ease-[ease] hover:bg-lime-700"
+            >
+              Dashboard
+            </Link>
           ) : (
             <Link
               href="/login"
@@ -335,9 +333,11 @@ export default function Header() {
               <a href="/#faq" className={mobileLinkClass} onClick={closeMobile}>
                 FAQ
               </a>
-              <Link href="/dash" className={mobileLinkClass} onClick={closeMobile}>
-                Dashboard
-              </Link>
+              {authChecked && isAuthenticated && (
+                <Link href="/dash" className={mobileLinkClass} onClick={closeMobile}>
+                  Dashboard
+                </Link>
+              )}
 
               <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
                 <Link
@@ -348,9 +348,13 @@ export default function Header() {
                   Get Started
                 </Link>
                 {authChecked && isAuthenticated ? (
-                  <LogoutButton
-                    className="block rounded-xl bg-lime-800 px-4 py-3 text-center text-base font-semibold text-stone-50 hover:bg-lime-700"
-                  />
+                  <Link
+                    href="/dash"
+                    className="block rounded-xl bg-lime-800 px-4 py-3 text-center text-base font-semibold text-stone-50 no-underline hover:bg-lime-700"
+                    onClick={closeMobile}
+                  >
+                    Dashboard
+                  </Link>
                 ) : (
                   <Link
                     href="/login"
