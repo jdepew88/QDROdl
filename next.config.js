@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.builder.io",
+        pathname: "/api/v1/image/**",
+      },
+    ],
+  },
   experimental: { serverComponentsExternalPackages: ["archiver"] },
   async headers() {
     if (process.env.NODE_ENV !== "development") return [];
