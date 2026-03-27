@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
-export default function LoginClient() {
+export default function RegisterClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/dash";
@@ -12,21 +12,24 @@ export default function LoginClient() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
-
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
       const text = await res.text().catch(() => "");
       let json: any = null;
       try {
@@ -34,15 +37,11 @@ export default function LoginClient() {
       } catch {
         json = null;
       }
-
-      if (!res.ok) {
-        throw new Error(json?.error || `Login failed (HTTP ${res.status})`);
-      }
-
+      if (!res.ok) throw new Error(json?.error || `Register failed (HTTP ${res.status})`);
       router.push(safeNext);
       router.refresh();
-    } catch (err: any) {
-      setError(err?.message || "Login failed.");
+    } catch (e: any) {
+      setError(e?.message || "Registration failed.");
     } finally {
       setLoading(false);
     }
@@ -51,9 +50,9 @@ export default function LoginClient() {
   return (
     <main className="mx-auto max-w-md px-4 py-16">
       <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h1 className="text-3xl font-bold text-stone-50">Login</h1>
+        <h1 className="text-3xl font-bold text-stone-50">Create your login</h1>
         <p className="mt-2 text-sm text-zinc-300">
-          Sign in to access your dashboard and documents.
+          Register once, then continue your intake from the dashboard.
         </p>
 
         <form className="mt-6 space-y-4" onSubmit={onSubmit}>
@@ -61,25 +60,35 @@ export default function LoginClient() {
             <label className="mb-1 block text-sm text-zinc-300">Email</label>
             <input
               type="email"
-              autoComplete="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-zinc-900 px-4 py-3 text-stone-50 outline-none ring-lime-700/50 placeholder:text-zinc-500 focus:ring-2"
+              className="w-full rounded-xl border border-white/15 bg-zinc-900 px-4 py-3 text-stone-50 outline-none ring-lime-700/50 focus:ring-2"
               placeholder="you@example.com"
             />
           </div>
-
           <div>
             <label className="mb-1 block text-sm text-zinc-300">Password</label>
             <input
               type="password"
-              autoComplete="current-password"
               required
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-zinc-900 px-4 py-3 text-stone-50 outline-none ring-lime-700/50 placeholder:text-zinc-500 focus:ring-2"
-              placeholder="Enter your password"
+              className="w-full rounded-xl border border-white/15 bg-zinc-900 px-4 py-3 text-stone-50 outline-none ring-lime-700/50 focus:ring-2"
+              placeholder="At least 8 characters"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-zinc-300">Confirm password</label>
+            <input
+              type="password"
+              required
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              className="w-full rounded-xl border border-white/15 bg-zinc-900 px-4 py-3 text-stone-50 outline-none ring-lime-700/50 focus:ring-2"
             />
           </div>
 
@@ -94,25 +103,16 @@ export default function LoginClient() {
             disabled={loading}
             className="w-full rounded-xl bg-lime-800 px-4 py-3 text-sm font-semibold text-stone-50 hover:bg-lime-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Creating account..." : "Create account"}
           </button>
         </form>
 
-        <div className="mt-5 text-sm text-zinc-300">
-          Need to start a new matter?{" "}
-          <Link href="/intake/plans" className="text-lime-400 hover:underline">
-            Go to intake
+        <p className="mt-5 text-sm text-zinc-300">
+          Already registered?{" "}
+          <Link href={`/login?next=${encodeURIComponent(safeNext)}`} className="text-lime-400 hover:underline">
+            Sign in
           </Link>
-        </div>
-        <div className="mt-2 text-sm text-zinc-300">
-          New here?{" "}
-          <Link
-            href={`/register?next=${encodeURIComponent(safeNext)}`}
-            className="text-lime-400 hover:underline"
-          >
-            Create a login
-          </Link>
-        </div>
+        </p>
       </div>
     </main>
   );

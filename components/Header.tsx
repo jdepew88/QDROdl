@@ -10,12 +10,15 @@ import {
   HEADER_LOGO_HEIGHT,
   HEADER_LOGO_WIDTH,
 } from "@/data/headerLogo";
+import LogoutButton from "@/components/LogoutButton";
 
 export default function Header() {
   const pathname = usePathname();
   const [showPlansDropdown, setShowPlansDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobilePlansOpen, setMobilePlansOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const plansMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,6 +47,28 @@ export default function Header() {
       document.body.style.overflow = prev;
     };
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
+        const json = await res.json().catch(() => null);
+        if (!cancelled) {
+          setIsAuthenticated(Boolean(json?.authenticated));
+          setAuthChecked(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setIsAuthenticated(false);
+          setAuthChecked(true);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (!showPlansDropdown) return;
@@ -178,17 +203,21 @@ export default function Header() {
             Dashboard
           </Link>
           <Link
-            href="/get-started"
+            href="/intake/plans"
             className="rounded-lg border-none bg-neutral-200 px-6 py-3 text-base font-[510] no-underline text-zinc-950"
           >
             Get Started
           </Link>
-          <Link
-            href="/login"
-            className="mr-4 rounded-lg border-none bg-lime-800 px-6 py-3 text-base font-[510] text-stone-50 no-underline transition-[background-color] duration-[0.2s] ease-[ease] hover:bg-lime-700"
-          >
-            Login
-          </Link>
+          {authChecked && isAuthenticated ? (
+            <LogoutButton className="mr-4 rounded-lg border-none bg-lime-800 px-6 py-3 text-base font-[510] text-stone-50 transition-[background-color] duration-[0.2s] ease-[ease] hover:bg-lime-700" />
+          ) : (
+            <Link
+              href="/login"
+              className="mr-4 rounded-lg border-none bg-lime-800 px-6 py-3 text-base font-[510] text-stone-50 no-underline transition-[background-color] duration-[0.2s] ease-[ease] hover:bg-lime-700"
+            >
+              Login
+            </Link>
+          )}
         </nav>
 
         {/* Mobile menu button */}
@@ -312,19 +341,25 @@ export default function Header() {
 
               <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
                 <Link
-                  href="/get-started"
+                  href="/intake/plans"
                   className="block rounded-xl bg-neutral-200 px-4 py-3 text-center text-base font-semibold text-zinc-950 no-underline"
                   onClick={closeMobile}
                 >
                   Get Started
                 </Link>
-                <Link
-                  href="/login"
-                  className="block rounded-xl bg-lime-800 px-4 py-3 text-center text-base font-semibold text-stone-50 no-underline hover:bg-lime-700"
-                  onClick={closeMobile}
-                >
-                  Login
-                </Link>
+                {authChecked && isAuthenticated ? (
+                  <LogoutButton
+                    className="block rounded-xl bg-lime-800 px-4 py-3 text-center text-base font-semibold text-stone-50 hover:bg-lime-700"
+                  />
+                ) : (
+                  <Link
+                    href="/login"
+                    className="block rounded-xl bg-lime-800 px-4 py-3 text-center text-base font-semibold text-stone-50 no-underline hover:bg-lime-700"
+                    onClick={closeMobile}
+                  >
+                    Login
+                  </Link>
+                )}
               </div>
             </nav>
           </div>

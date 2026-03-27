@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import DroPlanPicker from "@/components/intake/DroPlanPicker";
 
 type MatterListItem = {
   id: string;
@@ -123,6 +124,15 @@ export default function DashboardPage() {
             Open a matter to view downloads
           </div>
         </div>
+      </section>
+
+      <section className="mt-8">
+        <DroPlanPicker
+          title="Start a new DRO request"
+          description="Choose number of DROs and plans here in the dashboard, then continue with parties and attorney details."
+          continueLabel="Continue intake"
+          continueTo="/intake/parties"
+        />
       </section>
 
       {error && (
