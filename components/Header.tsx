@@ -196,7 +196,11 @@ export default function Header() {
             FAQ
           </a>
           <Link
-            href="/register?next=%2Fintake%2Fplans"
+            href={
+              authChecked && isAuthenticated
+                ? "/dash/process"
+                : "/register?next=%2Fintake%2Fplans"
+            }
             className="rounded-lg border-none bg-neutral-200 px-6 py-3 text-base font-[510] no-underline text-zinc-950"
           >
             Get Started
@@ -341,7 +345,11 @@ export default function Header() {
 
               <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
                 <Link
-                  href="/register?next=%2Fintake%2Fplans"
+                  href={
+                    authChecked && isAuthenticated
+                      ? "/dash/process"
+                      : "/register?next=%2Fintake%2Fplans"
+                  }
                   className="block rounded-xl bg-neutral-200 px-4 py-3 text-center text-base font-semibold text-zinc-950 no-underline"
                   onClick={closeMobile}
                 >

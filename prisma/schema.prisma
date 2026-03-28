@@ -6,8 +6,11 @@ model User {
   id              String                   @id @default(cuid())
   email           String                   @unique
   passwordHash    String
-  // Full name at registration; editable on profile.
+  firstName       String?
+  lastName        String?
+  // Kept for backward compatibility; optional mirror of "firstName lastName".
   displayName     String?
+  // Stored formatted as (000) 000-0000 after validating 10 digits.
   phone           String?
   emailVerifiedAt DateTime?
   createdAt       DateTime                 @default(now())

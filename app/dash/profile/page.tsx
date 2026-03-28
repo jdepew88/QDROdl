@@ -3,20 +3,48 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+type Me = {
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  emailVerified: boolean;
+};
+
 export default function ProfilePage() {
-  const [email, setEmail] = useState<string | null>(null);
+  const [me, setMe] = useState<Me | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me", { cache: "no-store" });
         const j = await res.json();
-        if (j?.email) setEmail(j.email);
+        if (!cancelled) {
+          setMe({
+            email: j?.email ?? null,
+            firstName: j?.firstName ?? null,
+            lastName: j?.lastName ?? null,
+            phone: j?.phone ?? null,
+            emailVerified: Boolean(j?.emailVerified),
+          });
+        }
       } catch {
-        setEmail(null);
+        if (!cancelled) setMe(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  const fullName =
+    me?.firstName || me?.lastName
+      ? [me.firstName, me.lastName].filter(Boolean).join(" ")
+      : null;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 lg:px-10 lg:py-10">
@@ -32,29 +60,35 @@ export default function ProfilePage() {
         </Link>
       </p>
 
-      <div className="mt-8 space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
-        <div>
-          <label className="text-xs font-medium text-zinc-500">Login email</label>
-          <p className="mt-1 text-stone-100">{email || "—"}</p>
+      {loading && (
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-zinc-400">
+          Loading…
         </div>
-        <div>
-          <label className="text-xs font-medium text-zinc-500">
-            Display name (coming soon)
-          </label>
-          <p className="mt-1 text-sm text-zinc-500">
-            Stored profile fields will appear here for personalization and
-            receipts.
-          </p>
+      )}
+
+      {!loading && (
+        <div className="mt-8 space-y-6 rounded-2xl border border-white/10 bg-white/5 p-6">
+          <div>
+            <label className="text-xs font-medium text-zinc-500">Name</label>
+            <p className="mt-1 text-stone-100">{fullName || "—"}</p>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-zinc-500">Phone</label>
+            <p className="mt-1 text-stone-100">{me?.phone || "—"}</p>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-zinc-500">Login email</label>
+            <p className="mt-1 text-stone-100">{me?.email || "—"}</p>
+            <p className="mt-2 text-xs text-zinc-500">
+              {me?.emailVerified ? (
+                <span className="text-emerald-400/90">Email verified</span>
+              ) : (
+                <span>Email not verified — check your inbox or sign in from login to resend.</span>
+              )}
+            </p>
+          </div>
         </div>
-        <div>
-          <label className="text-xs font-medium text-zinc-500">
-            Phone / firm (coming soon)
-          </label>
-          <p className="mt-1 text-sm text-zinc-500">
-            Optional contact details for billing and support.
-          </p>
-        </div>
-      </div>
+      )}
     </main>
   );
 }
