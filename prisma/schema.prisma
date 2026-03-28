@@ -6,10 +6,26 @@ model User {
   id              String                   @id @default(cuid())
   email           String                   @unique
   passwordHash    String
+  /** Full name collected at registration; editable on profile. */
+  displayName     String?
+  phone           String?
   emailVerifiedAt DateTime?
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
   verification    EmailVerificationToken[]
+  passwordResets  PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model EmailVerificationToken {
