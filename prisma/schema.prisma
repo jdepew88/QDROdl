@@ -6,7 +6,7 @@ model User {
   id              String                   @id @default(cuid())
   email           String                   @unique
   passwordHash    String
-  /** Full name collected at registration; editable on profile. */
+  // Full name at registration; editable on profile.
   displayName     String?
   phone           String?
   emailVerifiedAt DateTime?
