@@ -14,11 +14,18 @@ export default function PlanQuestions() {
   const r = useRouter();
   const { plans, planAnswers, altpayeeBeneficiaries, set } = useIntake();
 
-  const update = (plan: string, field: string, value: unknown) => {
+  const update = (plan: string, field: keyof PlanAnswer, value: unknown) => {
     const next = [...planAnswers];
     const i = next.findIndex((a) => a.plan === plan);
-    if (i >= 0) (next[i] as Record<string, unknown>)[field] = value;
-    else next.push({ plan: plan as PlanAnswer["plan"], [field]: value });
+    const patch = { [field]: value } as Partial<PlanAnswer>;
+    if (i >= 0) {
+      next[i] = { ...next[i], ...patch };
+    } else {
+      next.push({
+        plan: plan as PlanAnswer["plan"],
+        ...patch,
+      } as PlanAnswer);
+    }
     set({ planAnswers: next });
   };
 
