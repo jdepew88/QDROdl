@@ -22,6 +22,7 @@ function PartyForm({ which }: { which: "petitioner" | "respondent" }) {
       <div className="grid gap-3 md:grid-cols-2">
         <input className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50" placeholder="First Name" value={party.firstName || ""} onChange={(e) => update("firstName", e.target.value)} />
         <input className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50" placeholder="Last Name" value={party.lastName || ""} onChange={(e) => update("lastName", e.target.value)} />
+        <input className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50 md:col-span-2" placeholder="Former last name only, if different (shown as fka …)" value={party.fkaLastName || ""} onChange={(e) => update("fkaLastName", e.target.value)} />
         <input className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50" placeholder="Email" value={party.email || ""} onChange={(e) => update("email", e.target.value)} />
         <input className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50" placeholder="Phone" value={party.phone || ""} onChange={(e) => update("phone", e.target.value)} />
         <input className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50" placeholder="Address Line 1 (street)" value={party.address1 || ""} onChange={(e) => update("address1", e.target.value)} />

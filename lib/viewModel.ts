@@ -1,5 +1,21 @@
+/**
+ * Data object passed to docx-templates (`cmdDelimiter` `{{` `}}`). Each field replaces client-specific
+ * text in a Word template—sample orders used as models must have those facts removed and swapped
+ * for these paths (examples: `{{party.petitioner.full_name}}`, `{{case.number}}`, `{{court.county}}`,
+ * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}`, `{{member.display_name}}`, `{{altpayee.display_name}}`,
+ * `{{participant.pronouns.subject}}` / `object` / `possessive` / `reflexive`, `{{participant.Subject}}`,
+ * `{{signature.petitioner.caption_block}}`, `{{signature.respondent.caption_block}}`,
+ * `{{signature.petitioner.signatory_line}}`, `{{nonmember_beneficiary.b1.name}}` … `b4`,
+ * `{{calpers.order_model}}`, `{{calpers.option_3w}}`, `{{calpers.model_c_form}}`).
+ */
 import { prisma } from "@/lib/prisma";
 import { dec } from "@/lib/crypto";
+import { pronounsForSpouseType } from "@/lib/pronouns";
+import {
+  attorneyCaptionBlock,
+  proPerCaptionBlock,
+} from "@/lib/signatureCaption";
+import { mergeNonmemberBeneficiaryRows } from "@/lib/nonmemberBeneficiariesMerge";
 
 function fmtDate(d: any) {
   if (!d) return "";
@@ -15,6 +31,17 @@ function safeDec(b64?: string | null) {
   }
 }
 
+function displayName(p: {
+  firstName: string;
+  lastName: string;
+  fkaLastName?: string | null;
+}) {
+  const base = `${p.firstName} ${p.lastName}`.trim();
+  return p.fkaLastName
+    ? `${base} (fka ${p.fkaLastName})`
+    : base;
+}
+
 export async function buildViewModel(matterId: string) {
   const m = await prisma.matter.findUnique({
     where: { id: matterId },
@@ -23,46 +50,148 @@ export async function buildViewModel(matterId: string) {
       respondent: true,
       plans: true,
       attorneys: true,
+      altPayeeBeneficiaries: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!m) throw new Error("Matter not found");
 
-  const memberSide = (m as any).petitionerIsMember ? "PETITIONER" : "RESPONDENT";
+  const memberSide = m.petitionerIsMember ? "PETITIONER" : "RESPONDENT";
   const member = memberSide === "PETITIONER" ? m.petitioner : m.respondent;
   const nonMember = memberSide === "PETITIONER" ? m.respondent : m.petitioner;
 
+  const petAtt = m.attorneys.find((a) => a.side === "PETITIONER");
+  const respAtt = m.attorneys.find((a) => a.side === "RESPONDENT");
+
+  const petName = displayName(m.petitioner);
+  const respName = displayName(m.respondent);
+
+  const petCaption = petAtt?.name?.trim()
+    ? attorneyCaptionBlock({
+        name: petAtt.name,
+        address1: petAtt.address1,
+        address2: petAtt.address2,
+        phone: petAtt.phone,
+        forLabel: "Attorney for Petitioner",
+      })
+    : proPerCaptionBlock({
+        fullName: petName,
+        role: "Petitioner",
+        address1: m.petitioner.address1,
+        address2: m.petitioner.address2,
+        phone: m.petitioner.phone,
+      });
+
+  const respCaption = respAtt?.name?.trim()
+    ? attorneyCaptionBlock({
+        name: respAtt.name,
+        address1: respAtt.address1,
+        address2: respAtt.address2,
+        phone: respAtt.phone,
+        forLabel: "Attorney for Respondent",
+      })
+    : proPerCaptionBlock({
+        fullName: respName,
+        role: "Respondent",
+        address1: m.respondent.address1,
+        address2: m.respondent.address2,
+        phone: m.respondent.phone,
+      });
+
+  const petProPer = !petAtt?.name?.trim();
+  const respProPer = !respAtt?.name?.trim();
+
+  const participantPronouns = pronounsForSpouseType(member.spouseType);
+
+  const beneMerge = mergeNonmemberBeneficiaryRows(m.altPayeeBeneficiaries);
+  const calpersSel = m.plans.find((p) => p.planKey === "calpers");
+
   return {
-    court: { county: m.county === "Other" ? m.otherCounty || "California" : m.county },
+    court: {
+      county:
+        m.county === "Other" ? m.otherCounty || "California" : m.county,
+    },
     case: { number: m.caseNumber },
     dates: { dom: fmtDate(m.dom), dos: fmtDate(m.dos), doj: fmtDate(m.doj) },
     judgment: { filed_text: m.doj ? fmtDate(m.doj) : "not yet filed" },
     joinder: { filed_text: "" },
     party: {
-      petitioner: { full_name: `${m.petitioner.firstName} ${m.petitioner.lastName}` },
-      respondent: { full_name: `${m.respondent.firstName} ${m.respondent.lastName}` },
+      petitioner: {
+        full_name: petName,
+        first: m.petitioner.firstName,
+        last: m.petitioner.lastName,
+        fka_last: m.petitioner.fkaLastName || "",
+      },
+      respondent: {
+        full_name: respName,
+        first: m.respondent.firstName,
+        last: m.respondent.lastName,
+        fka_last: m.respondent.fkaLastName || "",
+      },
     },
     member: {
       side: memberSide,
       name_line: `${member.firstName} ${member.lastName}`,
+      display_name: displayName(member),
       address_line1: member.address1 || "",
       address_line2: member.address2 || "",
       phone: member.phone || "",
       dob: safeDec(member.dobEnc),
       ssn_full: safeDec(member.ssnEnc),
     },
-    nonmember: { side: memberSide === "PETITIONER" ? "RESPONDENT" : "PETITIONER" },
+    nonmember: {
+      side: memberSide === "PETITIONER" ? "RESPONDENT" : "PETITIONER",
+      display_name: displayName(nonMember),
+    },
+    participant: {
+      pronouns: participantPronouns,
+      /** Title-case subject for sentence starts if needed in templates */
+      Subject: participantPronouns.subject.replace(/^\w/, (c) =>
+        c.toUpperCase(),
+      ),
+    },
     altpayee: {
       name_line: `${nonMember.firstName} ${nonMember.lastName}`,
+      display_name: displayName(nonMember),
       address_line1: nonMember.address1 || "",
       address_line2: nonMember.address2 || "",
       phone: nonMember.phone || "",
       dob: safeDec(nonMember.dobEnc),
       ssn_full: safeDec(nonMember.ssnEnc),
     },
+    /** Non-member spouse’s designated beneficiaries (e.g. CalPERS Model B). */
+    nonmember_beneficiary_rows: beneMerge.nonmember_beneficiary_rows,
+    nonmember_beneficiary: beneMerge.nonmember_beneficiary,
+    /** CalPERS-specific flags from plan selection (for conditionals inside a single DOCX). */
+    calpers: {
+      order_model: calpersSel?.calpersOrderModel ?? "",
+      option_3w: Boolean(calpersSel?.calpersOption3W),
+      model_c_form: calpersSel?.calpersModelCForm ?? "",
+    },
     division: { percentage_text: "Fifty Percent (50%)" },
     attorney: {
-      petitioner: { name: m.attorneys.find((a) => a.side === "PETITIONER")?.name || "" },
-      respondent: { name: m.attorneys.find((a) => a.side === "RESPONDENT")?.name || "" },
+      petitioner: {
+        name: petAtt?.name || "",
+        is_pro_per: petProPer,
+      },
+      respondent: {
+        name: respAtt?.name || "",
+        is_pro_per: respProPer,
+      },
+    },
+    signature: {
+      petitioner: {
+        caption_block: petCaption,
+        /** Line printed at the signature for Petitioner */
+        signatory_line: petProPer
+          ? "Petitioner, In Pro Per"
+          : petName.toUpperCase(),
+      },
+      respondent: {
+        caption_block: respCaption,
+        signatory_line: respProPer
+          ? "Respondent, In Pro Per"
+          : respName.toUpperCase(),
+      },
     },
     preparer: { name: "Your Company", title: "QDRO Preparer" },
   };

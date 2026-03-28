@@ -28,23 +28,38 @@ datasource db {
 }
 
 model Matter {
-  id                     String          @id @default(cuid())
+  id                     String                 @id @default(cuid())
   caseNumber             String
   county                 String
   otherCounty            String?
   dom                    DateTime
   dos                    DateTime
   doj                    DateTime?
-  concurrentWithJudgment Boolean         @default(false)
+  concurrentWithJudgment Boolean                @default(false)
   petitionerId           String
   respondentId           String
-  petitionerIsMember     Boolean         @default(true)
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @updatedAt
+  petitionerIsMember     Boolean                @default(true)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
   attorneys              AttorneyInfo[]
-  petitioner             Party           @relation("Petitioner", fields: [petitionerId], references: [id])
-  respondent             Party           @relation("Respondent", fields: [respondentId], references: [id])
+  altPayeeBeneficiaries  AltPayeeBeneficiary[]
+  petitioner             Party                  @relation("Petitioner", fields: [petitionerId], references: [id])
+  respondent             Party                  @relation("Respondent", fields: [respondentId], references: [id])
   plans                  PlanSelection[]
+}
+
+/** Designated beneficiaries of the non-member spouse (alternate payee), e.g. CalPERS Model B. */
+model AltPayeeBeneficiary {
+  id           String  @id @default(cuid())
+  matterId     String
+  sortOrder    Int     @default(0)
+  fullName     String
+  relationship String?
+  address1     String?
+  address2     String?
+  matter       Matter  @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId])
 }
 
 model Party {
@@ -52,6 +67,7 @@ model Party {
   role              String
   firstName         String
   lastName          String
+  fkaLastName       String?
   email             String
   phone             String?
   address1          String
@@ -64,14 +80,19 @@ model Party {
 }
 
 model PlanSelection {
-  id              String   @id @default(cuid())
-  matterId        String
-  planKey         String
-  isInPayStatus   Boolean  @default(false)
-  usesTimeRule    Boolean?
-  laceraOption4   Boolean?
-  chosenTemplates String
-  matter          Matter   @relation(fields: [matterId], references: [id])
+  id                  String   @id @default(cuid())
+  matterId            String
+  planKey             String
+  isInPayStatus       Boolean  @default(false)
+  usesTimeRule        Boolean?
+  laceraOption4       Boolean?
+  calpersOrderModel   String?
+  /** CalPERS Model C only: optional “Option 3W” variant. */
+  calpersOption3W     Boolean?
+  /** CalPERS Model C: `standard` (default) vs `dro` (second template set). */
+  calpersModelCForm     String?
+  chosenTemplates       String
+  matter              Matter   @relation(fields: [matterId], references: [id])
 }
 
 model AttorneyInfo {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { enc } from "@/lib/crypto";
 import { prisma } from "@/lib/prisma";
+import { petitionerIsPlanMember } from "@/lib/intakeMember";
 
 export const runtime = "nodejs"; // ensure Node runtime for Prisma
 
@@ -11,12 +12,23 @@ export async function POST(req: Request) {
     const p = intake.petitioner;
     const r = intake.respondent;
 
+    const beneficiaryCreates = (intake.altpayeeBeneficiaries || [])
+      .filter((b: any) => (b.fullName || "").trim())
+      .map((b: any, idx: number) => ({
+        sortOrder: idx,
+        fullName: (b.fullName || "").trim(),
+        relationship: (b.relationship || "").trim() || null,
+        address1: (b.address1 || "").trim() || null,
+        address2: (b.address2 || "").trim() || null,
+      }));
+
     const matter = await prisma.$transaction(async (tx) => {
       const petitioner = await tx.party.create({
         data: {
           role: "PETITIONER",
           firstName: p.firstName,
           lastName: p.lastName,
+          fkaLastName: p.fkaLastName || null,
           email: p.email,
           phone: p.phone,
           address1: p.address1,
@@ -32,6 +44,7 @@ export async function POST(req: Request) {
           role: "RESPONDENT",
           firstName: r.firstName,
           lastName: r.lastName,
+          fkaLastName: r.fkaLastName || null,
           email: r.email,
           phone: r.phone,
           address1: r.address1,
@@ -55,7 +68,10 @@ export async function POST(req: Request) {
           petitionerId: petitioner.id,
           respondentId: respondent.id,
 
-          petitionerIsMember: Boolean(intake.petitioner?.isMember ?? true),
+          petitionerIsMember: petitionerIsPlanMember(
+            intake.petitioner,
+            intake.respondent,
+          ),
 
           attorneys: {
             create: [
@@ -90,9 +106,26 @@ export async function POST(req: Request) {
               isInPayStatus: Boolean(a.isInPayStatus),
               usesTimeRule: a.usesTimeRule ?? null,
               laceraOption4: a.laceraOption4 ?? null,
+              calpersOrderModel:
+                a.plan === "calpers" ? a.calpersOrderModel ?? "A" : null,
+              calpersOption3W:
+                a.plan === "calpers" &&
+                a.calpersOrderModel === "C" &&
+                (a.calpersModelCForm ?? "standard") === "standard"
+                  ? Boolean(a.calpersOption3W)
+                  : null,
+              calpersModelCForm:
+                a.plan === "calpers" && a.calpersOrderModel === "C"
+                  ? a.calpersModelCForm ?? "standard"
+                  : null,
               chosenTemplates: JSON.stringify(chosenTemplates),
             })),
           },
+
+          altPayeeBeneficiaries:
+            beneficiaryCreates.length > 0
+              ? { create: beneficiaryCreates }
+              : undefined,
         },
       });
 

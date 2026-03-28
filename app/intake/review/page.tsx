@@ -5,6 +5,7 @@ import {
   pickTemplateForPlan,
   TEMPLATE_FILES,
 } from "@/data/templates";
+import { petitionerIsPlanMember } from "@/lib/intakeMember";
 import { useState } from "react";
 
 export default function ReviewStep() {
@@ -16,14 +17,19 @@ export default function ReviewStep() {
   const [error, setError] = useState<string | null>(null);
   const [matterIdSaved, setMatterIdSaved] = useState<string | null>(null);
 
-  const templateIds = (s.planAnswers || []).flatMap(
-    (ans) =>
-      pickTemplateForPlan({
-        plan: ans.plan,
-        isInPayStatus: ans.isInPayStatus,
-        usesTimeRule: ans.usesTimeRule,
-        laceraOption4: ans.laceraOption4,
-      }) || [],
+  const petitionerMember = petitionerIsPlanMember(s.petitioner, s.respondent);
+
+  const templateIds = (s.planAnswers || []).flatMap((ans) =>
+    pickTemplateForPlan({
+      plan: ans.plan,
+      isInPayStatus: ans.isInPayStatus,
+      usesTimeRule: ans.usesTimeRule,
+      laceraOption4: ans.laceraOption4,
+      petitionerIsMember: petitionerMember,
+      calpersOrderModel: ans.calpersOrderModel,
+      calpersOption3W: ans.calpersOption3W,
+      calpersModelCForm: ans.calpersModelCForm,
+    }),
   );
 
   const fileNames = templateIds
