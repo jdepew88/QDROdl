@@ -48,7 +48,7 @@ model Matter {
   plans                  PlanSelection[]
 }
 
-/** Designated beneficiaries of the non-member spouse (alternate payee), e.g. CalPERS Model B. */
+// Designated beneficiaries of the non-member spouse (alternate payee), e.g. CalPERS Model B.
 model AltPayeeBeneficiary {
   id           String  @id @default(cuid())
   matterId     String
@@ -87,11 +87,11 @@ model PlanSelection {
   usesTimeRule        Boolean?
   laceraOption4       Boolean?
   calpersOrderModel   String?
-  /** CalPERS Model C only: optional “Option 3W” variant. */
+  // CalPERS Model C only: optional Option 3W variant.
   calpersOption3W     Boolean?
-  /** CalPERS Model C: `standard` (default) vs `dro` (second template set). */
-  calpersModelCForm     String?
-  chosenTemplates       String
+  // CalPERS Model C: standard (default) vs dro (second template set).
+  calpersModelCForm   String?
+  chosenTemplates     String
   matter              Matter   @relation(fields: [matterId], references: [id])
 }
 
