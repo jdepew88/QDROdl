@@ -109,7 +109,10 @@ function calpersTemplateId(
  */
 export function pickTemplateForPlan(input: PlanTemplateInput): TemplateId[] {
   if (input.plan === "calpers") {
-    const model = input.calpersOrderModel ?? "A";
+    // Member already in pay status → CalPERS Model C order (retired / benefit in pay).
+    const model: CalpersOrderModel = input.isInPayStatus
+      ? "C"
+      : input.calpersOrderModel ?? "A";
     const modelCForm: CalpersModelCForm =
       model === "C" ? input.calpersModelCForm ?? "standard" : "standard";
     const option3W =

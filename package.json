@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "build:letter-placeholders": "node scripts/build-placeholder-letter-templates.mjs",
     "dev": "next dev --hostname 127.0.0.1 --port 3000",
     "dev:turbo": "next dev --turbo --hostname 127.0.0.1 --port 3000",
     "build": "next build",
@@ -23,6 +24,7 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "jszip": "^3.10.1",
     "@types/react": "19.1.10",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.41",

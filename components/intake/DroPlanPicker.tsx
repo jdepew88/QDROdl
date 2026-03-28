@@ -19,7 +19,7 @@ export default function DroPlanPicker({
   title,
   description,
   continueLabel = "Continue",
-  continueTo = "/intake/parties",
+  continueTo = "/intake/case",
   className = "",
 }: Props) {
   const router = useRouter();

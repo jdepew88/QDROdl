@@ -97,8 +97,10 @@ export async function buildViewModel(matterId: string) {
         phone: m.respondent.phone,
       });
 
-  const petProPer = !petAtt?.name?.trim();
-  const respProPer = !respAtt?.name?.trim();
+  const petProPer =
+    Boolean(m.petitioner.selfRepresented) || !petAtt?.name?.trim();
+  const respProPer =
+    Boolean(m.respondent.selfRepresented) || !respAtt?.name?.trim();
 
   const participantPronouns = pronounsForSpouseType(member.spouseType);
 

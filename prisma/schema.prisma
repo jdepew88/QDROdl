@@ -68,6 +68,7 @@ model Party {
   firstName         String
   lastName          String
   fkaLastName       String?
+  selfRepresented   Boolean  @default(false)
   email             String
   phone             String?
   address1          String

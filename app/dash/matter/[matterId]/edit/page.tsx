@@ -1,0 +1,440 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { County } from "@/data/templates";
+
+const COUNTIES: County[] = [
+  "Los Angeles",
+  "Orange",
+  "Ventura",
+  "San Bernardino",
+  "San Diego",
+  "Other",
+];
+
+export default function EditMatterPage({
+  params,
+}: {
+  params: { matterId: string };
+}) {
+  const matterId = params.matterId;
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<any>(null);
+
+  useEffect(() => {
+    let c = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/matters/${matterId}`);
+        const j = await res.json();
+        if (!res.ok) throw new Error(j?.error || "Load failed");
+        if (c) return;
+        const m = j.matter;
+        const pet = m.petitioner;
+        const resp = m.respondent;
+        const petAt = m.attorneys?.find((a: any) => a.side === "PETITIONER");
+        const respAt = m.attorneys?.find((a: any) => a.side === "RESPONDENT");
+        setForm({
+          caseNumber: m.caseNumber,
+          county: m.county,
+          otherCounty: m.otherCounty || "",
+          dom: m.dom?.slice(0, 10) || "",
+          dos: m.dos?.slice(0, 10) || "",
+          doj: m.doj ? m.doj.slice(0, 10) : "",
+          concurrentWithJudgment: m.concurrentWithJudgment,
+          petitionerIsMember: m.petitionerIsMember,
+          petitioner: {
+            firstName: pet.firstName,
+            lastName: pet.lastName,
+            fkaLastName: pet.fkaLastName || "",
+            selfRepresented: pet.selfRepresented,
+            email: pet.email,
+            phone: pet.phone || "",
+            address1: pet.address1,
+            address2: pet.address2 || "",
+            spouseType: pet.spouseType || "Husband",
+          },
+          respondent: {
+            firstName: resp.firstName,
+            lastName: resp.lastName,
+            fkaLastName: resp.fkaLastName || "",
+            selfRepresented: resp.selfRepresented,
+            email: resp.email,
+            phone: resp.phone || "",
+            address1: resp.address1,
+            address2: resp.address2 || "",
+            spouseType: resp.spouseType || "Wife",
+          },
+          attorneys: {
+            petitioner: petAt
+              ? {
+                  name: petAt.name,
+                  bar: petAt.barNumber || "",
+                  email: petAt.email || "",
+                  phone: petAt.phone || "",
+                  address1: petAt.address1 || "",
+                  address2: petAt.address2 || "",
+                }
+              : { name: "" },
+            respondent: respAt
+              ? {
+                  name: respAt.name,
+                  bar: respAt.barNumber || "",
+                  email: respAt.email || "",
+                  phone: respAt.phone || "",
+                  address1: respAt.address1 || "",
+                  address2: respAt.address2 || "",
+                }
+              : { name: "" },
+          },
+          beneficiaries:
+            m.altPayeeBeneficiaries?.map((b: any) => ({
+              fullName: b.fullName,
+              relationship: b.relationship || "",
+              address1: b.address1 || "",
+              address2: b.address2 || "",
+            })) || [],
+        });
+      } catch (e: any) {
+        if (!c) setError(e.message);
+      } finally {
+        if (!c) setLoading(false);
+      }
+    })();
+    return () => {
+      c = true;
+    };
+  }, [matterId]);
+
+  const save = async () => {
+    if (!form) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/matters/${matterId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          caseNumber: form.caseNumber,
+          county: form.county,
+          otherCounty: form.otherCounty || null,
+          dom: form.dom,
+          dos: form.dos,
+          doj: form.doj || null,
+          concurrentWithJudgment: form.concurrentWithJudgment,
+          petitionerIsMember: form.petitionerIsMember,
+          petitioner: form.petitioner,
+          respondent: form.respondent,
+          attorneys: form.attorneys,
+          altpayeeBeneficiaries: form.beneficiaries.filter(
+            (b: any) => (b.fullName || "").trim(),
+          ),
+        }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.error || "Save failed");
+      router.push(`/dash/matter/${matterId}`);
+      router.refresh();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-12 text-zinc-300">Loading…</main>
+    );
+  }
+  if (error && !form) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-12 text-rose-200">
+        {error}
+      </main>
+    );
+  }
+  if (!form) return null;
+
+  const pf = (prefix: string, field: string, v: unknown) => {
+    setForm({
+      ...form,
+      [prefix]: { ...form[prefix], [field]: v },
+    });
+  };
+
+  return (
+    <main className="mx-auto max-w-4xl px-4 py-10">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-stone-50">Edit matter</h1>
+        <Link
+          href={`/dash/matter/${matterId}`}
+          className="text-sm text-lime-400 hover:underline"
+        >
+          Cancel
+        </Link>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/50 p-3 text-sm text-rose-100">
+          {error}
+        </div>
+      )}
+
+      <section className="mb-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h2 className="font-semibold text-stone-100">Case</h2>
+        <input
+          className="w-full rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+          value={form.caseNumber}
+          onChange={(e) => setForm({ ...form, caseNumber: e.target.value })}
+        />
+        <select
+          className="w-full rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+          value={form.county}
+          onChange={(e) => setForm({ ...form, county: e.target.value })}
+        >
+          {COUNTIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        {form.county === "Other" && (
+          <input
+            className="w-full rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+            placeholder="County"
+            value={form.otherCounty}
+            onChange={(e) => setForm({ ...form, otherCounty: e.target.value })}
+          />
+        )}
+        <div className="grid gap-3 md:grid-cols-3">
+          <input
+            type="date"
+            className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+            value={form.dom}
+            onChange={(e) => setForm({ ...form, dom: e.target.value })}
+          />
+          <input
+            type="date"
+            className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+            value={form.dos}
+            onChange={(e) => setForm({ ...form, dos: e.target.value })}
+          />
+          <input
+            type="date"
+            className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+            value={form.doj}
+            onChange={(e) => setForm({ ...form, doj: e.target.value })}
+          />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-zinc-300">
+          <input
+            type="checkbox"
+            checked={form.concurrentWithJudgment}
+            onChange={(e) =>
+              setForm({ ...form, concurrentWithJudgment: e.target.checked })
+            }
+          />
+          Concurrent with judgment
+        </label>
+        <label className="flex items-center gap-2 text-sm text-zinc-300">
+          <input
+            type="checkbox"
+            checked={form.petitionerIsMember}
+            onChange={(e) =>
+              setForm({ ...form, petitionerIsMember: e.target.checked })
+            }
+          />
+          Petitioner is plan member (otherwise respondent is)
+        </label>
+      </section>
+
+      {(["petitioner", "respondent"] as const).map((side) => (
+        <section
+          key={side}
+          className="mb-8 space-y-3 rounded-2xl border border-white/10 bg-white/5 p-5"
+        >
+          <h2 className="font-semibold capitalize text-stone-100">{side}</h2>
+          <label className="flex items-center gap-2 text-sm text-zinc-300">
+            <input
+              type="checkbox"
+              checked={!!form[side].selfRepresented}
+              onChange={(e) => pf(side, "selfRepresented", e.target.checked)}
+            />
+            Self-represented
+          </label>
+          <div className="grid gap-2 md:grid-cols-2">
+            <input
+              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="First"
+              value={form[side].firstName}
+              onChange={(e) => pf(side, "firstName", e.target.value)}
+            />
+            <input
+              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="Last"
+              value={form[side].lastName}
+              onChange={(e) => pf(side, "lastName", e.target.value)}
+            />
+            <input
+              className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="FKA last name"
+              value={form[side].fkaLastName}
+              onChange={(e) => pf(side, "fkaLastName", e.target.value)}
+            />
+            <input
+              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="Email"
+              value={form[side].email}
+              onChange={(e) => pf(side, "email", e.target.value)}
+            />
+            <input
+              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="Phone"
+              value={form[side].phone}
+              onChange={(e) => pf(side, "phone", e.target.value)}
+            />
+            <input
+              className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="Address 1"
+              value={form[side].address1}
+              onChange={(e) => pf(side, "address1", e.target.value)}
+            />
+            <input
+              className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="Address 2"
+              value={form[side].address2}
+              onChange={(e) => pf(side, "address2", e.target.value)}
+            />
+          </div>
+        </section>
+      ))}
+
+      <section className="mb-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h2 className="font-semibold text-stone-100">Attorneys</h2>
+        {!form.petitioner.selfRepresented && (
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-400">Petitioner attorney</p>
+            {(["name", "bar", "email", "phone", "address1", "address2"] as const).map(
+              (f) => (
+                <input
+                  key={f}
+                  className="w-full rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+                  placeholder={f}
+                  value={form.attorneys.petitioner[f] || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      attorneys: {
+                        ...form.attorneys,
+                        petitioner: {
+                          ...form.attorneys.petitioner,
+                          [f]: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              ),
+            )}
+          </div>
+        )}
+        {!form.respondent.selfRepresented && (
+          <div className="space-y-2">
+            <p className="text-xs text-zinc-400">Respondent attorney</p>
+            {(["name", "bar", "email", "phone", "address1", "address2"] as const).map(
+              (f) => (
+                <input
+                  key={f}
+                  className="w-full rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+                  placeholder={f}
+                  value={form.attorneys.respondent[f] || ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      attorneys: {
+                        ...form.attorneys,
+                        respondent: {
+                          ...form.attorneys.respondent,
+                          [f]: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                />
+              ),
+            )}
+          </div>
+        )}
+      </section>
+
+      <section className="mb-8 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h2 className="mb-2 font-semibold text-stone-100">
+          Alternate payee beneficiaries
+        </h2>
+        <p className="mb-3 text-xs text-zinc-400">
+          Model B / non-member spouse beneficiaries. Leave blank rows out of the
+          saved list.
+        </p>
+        {form.beneficiaries.map((b: any, i: number) => (
+          <div key={i} className="mb-3 grid gap-2 border-t border-white/10 pt-3">
+            <input
+              className="rounded-lg border border-white/15 bg-zinc-900 p-2 text-stone-50"
+              placeholder="Name"
+              value={b.fullName}
+              onChange={(e) => {
+                const next = [...form.beneficiaries];
+                next[i] = { ...next[i], fullName: e.target.value };
+                setForm({ ...form, beneficiaries: next });
+              }}
+            />
+            <input
+              className="rounded-lg border border-white/15 bg-zinc-900 p-2 text-stone-50"
+              placeholder="Relationship"
+              value={b.relationship}
+              onChange={(e) => {
+                const next = [...form.beneficiaries];
+                next[i] = { ...next[i], relationship: e.target.value };
+                setForm({ ...form, beneficiaries: next });
+              }}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          className="mt-2 text-sm text-lime-400 hover:underline"
+          onClick={() =>
+            setForm({
+              ...form,
+              beneficiaries: [
+                ...form.beneficiaries,
+                {
+                  fullName: "",
+                  relationship: "",
+                  address1: "",
+                  address2: "",
+                },
+              ],
+            })
+          }
+        >
+          Add beneficiary row
+        </button>
+      </section>
+
+      <button
+        type="button"
+        onClick={save}
+        disabled={saving}
+        className="rounded-xl bg-lime-800 px-6 py-3 font-semibold text-white disabled:opacity-50"
+      >
+        {saving ? "Saving…" : "Save changes"}
+      </button>
+    </main>
+  );
+}

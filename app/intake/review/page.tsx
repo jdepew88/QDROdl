@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useIntake } from "../_state/useIntake";
 import {
   pickTemplateForPlan,
@@ -86,7 +87,17 @@ export default function ReviewStep() {
         const blob = await res.blob();
         if (!res.ok) {
           const errText = await blob.text().catch(() => "");
-          throw new Error(errText || "Failed to generate drafts");
+          let msg = errText || "Failed to generate drafts";
+          try {
+            const j = JSON.parse(errText);
+            if (j?.error) msg = j.error;
+            if (j?.missing?.length) {
+              msg += ` Missing: ${j.missing.join("; ")}`;
+            }
+          } catch {
+            /* plain text */
+          }
+          throw new Error(msg);
         }
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -99,10 +110,15 @@ export default function ReviewStep() {
       } else {
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data?.error || "Failed to save drafts");
+          throw new Error(
+            data?.error
+              ? `${data.error}${data.missing?.length ? ` — ${data.missing.join("; ")}` : ""}`
+              : "Failed to save drafts",
+          );
         }
         setSavedLinks(data.files || []);
       }
+      setMatterIdSaved(matterId);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -112,23 +128,56 @@ export default function ReviewStep() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <h1 className="mb-4 text-2xl font-bold">Review & confirm</h1>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        Step 5
+      </p>
+      <h1 className="mb-2 text-2xl font-bold text-stone-50">
+        Review & generate drafts
+      </h1>
+      <p className="mb-6 text-sm text-zinc-300">
+        <Link
+          href="/intake/plan-questions"
+          className="text-lime-400 underline-offset-2 hover:underline"
+        >
+          Back to plan questions
+        </Link>
+      </p>
 
       {!canGenerate && (
-        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-          Word templates are not mapped yet in <code>TEMPLATE_FILES</code> /{" "}
-          <code>pickTemplateForPlan</code>. You can still save the intake to the
-          database; draft generation will work once template files are added
-          under <code>templates/</code>.
+        <div className="mb-6 rounded-2xl border border-amber-500/40 bg-amber-950/50 p-4 text-sm text-amber-100">
+          No Word templates are mapped for the plans you selected, or plans were
+          not chosen. You can still{" "}
+          <strong className="text-amber-50">save the intake</strong> to the
+          database. Generation runs when matching{" "}
+          <code className="rounded bg-black/30 px-1">.docx</code> files exist
+          under <code className="rounded bg-black/30 px-1">templates/</code> (see{" "}
+          <code className="rounded bg-black/30 px-1">data/templates.ts</code>
+          ).
         </div>
       )}
 
-      <div className="mb-6 rounded-2xl border p-5">
-        <h2 className="mb-2 font-semibold">Templates to generate</h2>
+      {canGenerate && (
+        <div className="mb-6 rounded-2xl border border-sky-500/30 bg-sky-950/40 p-4 text-sm text-sky-100">
+          <p className="font-medium text-sky-50">Downloads &amp; your matter folder</p>
+          <p className="mt-2 text-sky-100/90">
+            Every successful generation <strong>stores dated copies on the server</strong>{" "}
+            under this matter so you (or your client) can download them again anytime
+            from the dashboard — individual files or a full ZIP.{" "}
+            <strong>Download ZIP</strong> also saves that ZIP to your device now;{" "}
+            <strong>Save to server only</strong> skips the browser download and shows
+            links on the confirmation screen.
+          </p>
+        </div>
+      )}
+
+      <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h2 className="mb-2 font-semibold text-stone-100">
+          Templates to generate
+        </h2>
         {fileNames.length === 0 ? (
-          <p className="text-gray-600">No templates selected yet.</p>
+          <p className="text-sm text-zinc-400">None selected.</p>
         ) : (
-          <ul className="list-inside list-disc text-gray-800">
+          <ul className="list-inside list-disc text-sm text-zinc-200">
             {fileNames.map((f, i) => (
               <li key={i}>{f}</li>
             ))}
@@ -136,31 +185,35 @@ export default function ReviewStep() {
         )}
       </div>
 
-      <div className="mb-6 grid gap-4 rounded-2xl border p-5 md:grid-cols-3">
+      <div className="mb-6 grid gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 md:grid-cols-3">
         <div>
-          <label className="mb-1 block text-sm text-gray-600">Format</label>
+          <label className="mb-2 block text-sm font-medium text-zinc-300">
+            Output format
+          </label>
           <select
-            className="w-full rounded-lg border p-3"
+            className="w-full rounded-xl border border-white/15 bg-zinc-900 p-3 text-stone-50 outline-none ring-lime-700/30 focus:ring-2"
             value={format}
             onChange={(e) => setFormat(e.target.value as "docx" | "pdf")}
             disabled={!canGenerate}
           >
-            <option value="docx">DOCX</option>
-            <option value="pdf">PDF</option>
+            <option value="docx">Word (.docx)</option>
+            <option value="pdf">PDF (requires LibreOffice on server)</option>
           </select>
         </div>
         <div>
-          <label className="mb-1 block text-sm text-gray-600">Delivery</label>
+          <label className="mb-2 block text-sm font-medium text-zinc-300">
+            Delivery
+          </label>
           <select
-            className="w-full rounded-lg border p-3"
+            className="w-full rounded-xl border border-white/15 bg-zinc-900 p-3 text-stone-50 outline-none ring-lime-700/30 focus:ring-2"
             value={delivery}
             onChange={(e) =>
               setDelivery(e.target.value as "download" | "save")
             }
             disabled={!canGenerate}
           >
-            <option value="download">Download now (ZIP)</option>
-            <option value="save">Save to /documents (dated drafts)</option>
+            <option value="download">ZIP to this device + save on server</option>
+            <option value="save">Save on server only (links, no ZIP prompt)</option>
           </select>
         </div>
         <div className="flex flex-col justify-end gap-2">
@@ -168,36 +221,45 @@ export default function ReviewStep() {
             type="button"
             onClick={generate}
             disabled={saving || !canGenerate}
-            className="w-full rounded-xl bg-black px-6 py-3 text-white disabled:opacity-50"
+            className="w-full rounded-xl bg-lime-800 px-6 py-3 font-semibold text-stone-50 hover:bg-lime-700 disabled:opacity-50"
           >
-            {saving && canGenerate ? "Working…" : "Generate drafts"}
+            {saving && canGenerate ? "Working…" : "Save matter & generate"}
           </button>
           <button
             type="button"
             onClick={submitIntakeOnly}
             disabled={saving}
-            className="w-full rounded-xl border border-zinc-400 px-6 py-3 text-zinc-900 disabled:opacity-50"
+            className="w-full rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-zinc-100 hover:bg-white/5 disabled:opacity-50"
           >
-            Save intake only
+            Save matter only (no files)
           </button>
         </div>
       </div>
 
-      {error && <p className="mb-4 text-red-600">{error}</p>}
-      {matterIdSaved && (
-        <p className="mb-4 text-sm text-green-800">
-          Intake saved. Matter id:{" "}
-          <span className="font-mono">{matterIdSaved}</span>
+      {error && (
+        <p className="mb-4 rounded-xl border border-rose-500/40 bg-rose-950/50 p-3 text-sm text-rose-100">
+          {error}
         </p>
       )}
-      {savedLinks && (
-        <div className="rounded-2xl border p-5">
-          <h3 className="mb-2 font-semibold">Saved drafts</h3>
-          <ul className="list-inside list-disc">
+      {matterIdSaved && (
+        <p className="mb-4 text-sm text-lime-200">
+          Matter id:{" "}
+          <Link
+            href={`/dash/matter/${matterIdSaved}`}
+            className="font-mono text-lime-300 underline-offset-2 hover:underline"
+          >
+            {matterIdSaved}
+          </Link>
+        </p>
+      )}
+      {savedLinks && savedLinks.length > 0 && (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <h3 className="mb-2 font-semibold text-stone-100">Saved on server</h3>
+          <ul className="space-y-2 text-sm">
             {savedLinks.map((href, i) => (
               <li key={i}>
                 <a
-                  className="text-blue-700 underline"
+                  className="text-lime-400 underline-offset-2 hover:underline"
                   href={href}
                   target="_blank"
                   rel="noreferrer"

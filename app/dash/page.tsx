@@ -61,7 +61,7 @@ export default function DashboardPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-12">
+    <main className="mx-auto max-w-6xl px-4 py-8 lg:px-10 lg:py-10">
       <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-[radial-gradient(1200px_circle_at_0%_0%,rgba(59,130,246,0.18),transparent_55%),radial-gradient(900px_circle_at_100%_0%,rgba(132,204,22,0.14),transparent_55%)] p-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
@@ -69,15 +69,15 @@ export default function DashboardPage() {
               CLIENT PORTAL
             </p>
             <h1 className="mt-2 text-3xl font-semibold text-stone-50">
-              Dashboard
+              Overview
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-zinc-300">
-              Recent matters and saved draft documents. Use intake to create a
-              matter, then generate drafts as ZIP downloads or save dated files
-              to <code className="rounded bg-white/10 px-1.5 py-0.5">/documents</code>.
+              Case list and drafts stored for each matter. After you generate from
+              review, files are kept on the server so they can be downloaded again
+              from the matter page (single files or all as ZIP) as often as needed.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/intake/plans"
               className="rounded-xl bg-neutral-200 px-5 py-3 text-sm font-semibold text-zinc-950 hover:bg-white"
@@ -129,9 +129,9 @@ export default function DashboardPage() {
       <section className="mt-8">
         <DroPlanPicker
           title="Start a new DRO request"
-          description="Choose number of DROs and plans here in the dashboard, then continue with parties and attorney details."
+          description="Choose plans first, then case information, parties, attorneys (if any), and plan-specific questions."
           continueLabel="Continue intake"
-          continueTo="/intake/parties"
+          continueTo="/intake/case"
         />
       </section>
 
@@ -195,11 +195,43 @@ export default function DashboardPage() {
                       Documents
                     </Link>
                     <Link
+                      href={`/dash/matter/${m.id}/edit`}
+                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-100 hover:bg-white/10"
+                    >
+                      Edit case / parties
+                    </Link>
+                    <Link
                       href="/intake/review"
                       className="rounded-lg bg-lime-800 px-3 py-2 text-sm font-semibold text-stone-50 hover:bg-lime-700"
                     >
-                      Generate
+                      New drafts
                     </Link>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (
+                          !confirm(
+                            `Delete matter ${m.caseNumber}? This cannot be undone.`,
+                          )
+                        )
+                          return;
+                        try {
+                          const res = await fetch(`/api/matters/${m.id}`, {
+                            method: "DELETE",
+                          });
+                          if (!res.ok) {
+                            const j = await res.json().catch(() => ({}));
+                            throw new Error(j.error || "Delete failed");
+                          }
+                          setMatters((prev) => prev.filter((x) => x.id !== m.id));
+                        } catch (e: any) {
+                          alert(e.message);
+                        }
+                      }}
+                      className="rounded-lg border border-rose-500/40 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-950/50"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               </li>

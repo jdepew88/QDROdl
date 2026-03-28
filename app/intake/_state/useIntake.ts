@@ -12,6 +12,8 @@ export interface PartyForm {
   firstName: string;
   lastName: string;
   fkaLastName?: string;
+  /** If true, party appears in pro per; attorney step is skipped for this side. */
+  selfRepresented?: boolean;
   email: string;
   phone?: string;
   address1: string;
@@ -45,12 +47,14 @@ export interface PlanAnswer {
 }
 
 function emptyBeneficiarySlots(): AltPayeeBeneficiaryForm[] {
-  return Array.from({ length: NONMEMBER_BENEFICIARY_SLOT_COUNT }, () => ({
-    fullName: "",
-    relationship: "",
-    address1: "",
-    address2: "",
-  }));
+  return [
+    {
+      fullName: "",
+      relationship: "",
+      address1: "",
+      address2: "",
+    },
+  ];
 }
 
 export interface IntakeState {

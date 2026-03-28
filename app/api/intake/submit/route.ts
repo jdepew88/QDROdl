@@ -29,6 +29,7 @@ export async function POST(req: Request) {
           firstName: p.firstName,
           lastName: p.lastName,
           fkaLastName: p.fkaLastName || null,
+          selfRepresented: Boolean(p.selfRepresented),
           email: p.email,
           phone: p.phone,
           address1: p.address1,
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
           firstName: r.firstName,
           lastName: r.lastName,
           fkaLastName: r.fkaLastName || null,
+          selfRepresented: Boolean(r.selfRepresented),
           email: r.email,
           phone: r.phone,
           address1: r.address1,
@@ -75,7 +77,7 @@ export async function POST(req: Request) {
 
           attorneys: {
             create: [
-              intake.attorneys?.petitioner?.name
+              intake.attorneys?.petitioner?.name && !p.selfRepresented
                 ? {
                     side: "PETITIONER",
                     name: intake.attorneys.petitioner.name,
@@ -86,7 +88,7 @@ export async function POST(req: Request) {
                     address2: intake.attorneys.petitioner.address2,
                   }
                 : undefined,
-              intake.attorneys?.respondent?.name
+              intake.attorneys?.respondent?.name && !r.selfRepresented
                 ? {
                     side: "RESPONDENT",
                     name: intake.attorneys.respondent.name,
@@ -101,25 +103,33 @@ export async function POST(req: Request) {
           },
 
           plans: {
-            create: (intake.planAnswers || []).map((a: any) => ({
-              planKey: a.plan,
-              isInPayStatus: Boolean(a.isInPayStatus),
-              usesTimeRule: a.usesTimeRule ?? null,
-              laceraOption4: a.laceraOption4 ?? null,
-              calpersOrderModel:
-                a.plan === "calpers" ? a.calpersOrderModel ?? "A" : null,
-              calpersOption3W:
+            create: (intake.planAnswers || []).map((a: any) => {
+              const calpersModelSaved =
+                a.plan === "calpers"
+                  ? a.isInPayStatus
+                    ? "C"
+                    : a.calpersOrderModel ?? "A"
+                  : null;
+              const isCalpersC =
                 a.plan === "calpers" &&
-                a.calpersOrderModel === "C" &&
-                (a.calpersModelCForm ?? "standard") === "standard"
-                  ? Boolean(a.calpersOption3W)
-                  : null,
-              calpersModelCForm:
-                a.plan === "calpers" && a.calpersOrderModel === "C"
+                (a.isInPayStatus || calpersModelSaved === "C");
+              return {
+                planKey: a.plan,
+                isInPayStatus: Boolean(a.isInPayStatus),
+                usesTimeRule: a.usesTimeRule ?? null,
+                laceraOption4: a.laceraOption4 ?? null,
+                calpersOrderModel: calpersModelSaved,
+                calpersOption3W:
+                  isCalpersC &&
+                  (a.calpersModelCForm ?? "standard") === "standard"
+                    ? Boolean(a.calpersOption3W)
+                    : null,
+                calpersModelCForm: isCalpersC
                   ? a.calpersModelCForm ?? "standard"
                   : null,
-              chosenTemplates: JSON.stringify(chosenTemplates),
-            })),
+                chosenTemplates: JSON.stringify(chosenTemplates),
+              };
+            }),
           },
 
           altPayeeBeneficiaries:
