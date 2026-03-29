@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import LogoutButton from "@/components/LogoutButton";
 import { DASH_NAV_MAIN } from "@/data/dashboardNav";
 
 function isActive(pathname: string, href: string) {
@@ -54,6 +55,10 @@ export default function DashboardSidebar() {
         >
           + New intake
         </Link>
+
+        <div className="mt-3 border-t border-white/10 pt-3">
+          <LogoutButton className="w-full rounded-lg border border-white/15 px-3 py-2.5 text-left text-sm font-medium text-zinc-200 hover:bg-white/5" />
+        </div>
       </nav>
     </aside>
   );
