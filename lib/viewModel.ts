@@ -7,6 +7,19 @@
  * `{{signature.petitioner.caption_block}}`, `{{signature.respondent.caption_block}}`,
  * `{{signature.petitioner.signatory_line}}`, `{{nonmember_beneficiary.b1.name}}` … `b4`,
  * `{{calpers.order_model}}`, `{{calpers.option_3w}}`, `{{calpers.model_c_form}}`).
+ *
+ * CalPERS Model A (line-based pleading block example, page 1 top-left):
+ *   {{party.petitioner.full_name}}
+ *   Petitioner, In Pro Per
+ *   {{member.address_line1}}
+ *   {{member.address_line2}}
+ *   {{party.petitioner.phone}}
+ *
+ * Core placeholders (also use in body): `{{case.number}}`, `{{court.county}}`,
+ * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}`, `{{party.petitioner.full_name}}`,
+ * `{{party.respondent.full_name}}`, `{{member.display_name}}`, `{{altpayee.display_name}}`,
+ * `{{member.address_line1}}`, `{{member.address_line2}}`, `{{altpayee.address_line1}}`,
+ * `{{altpayee.address_line2}}`, `{{party.petitioner.phone}}`, `{{party.respondent.phone}}`.
  */
 import { prisma } from "@/lib/prisma";
 import { dec } from "@/lib/crypto";
@@ -122,12 +135,14 @@ export async function buildViewModel(matterId: string) {
         first: m.petitioner.firstName,
         last: m.petitioner.lastName,
         fka_last: m.petitioner.fkaLastName || "",
+        phone: m.petitioner.phone || "",
       },
       respondent: {
         full_name: respName,
         first: m.respondent.firstName,
         last: m.respondent.lastName,
         fka_last: m.respondent.fkaLastName || "",
+        phone: m.respondent.phone || "",
       },
     },
     member: {

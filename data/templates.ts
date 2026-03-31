@@ -46,8 +46,8 @@ export type TemplateId = string;
  * Replace stubs after copying converted model orders from completed cases.
  */
 export const TEMPLATE_FILES: Record<TemplateId, string> = {
-  "calpers-modA-pet-mem": "calpers/mod-a-petitioner-member.docx",
-  "calpers-modA-resp-mem": "calpers/mod-a-respondent-member.docx",
+  "calpers-modA-pet-mem": "calpers/CalPERS_Model_A_Hus_Pet_Mem.docx",
+  "calpers-modA-resp-mem": "calpers/CalPERS_Model_A_Wife_Resp_Mem.docx",
   "calpers-modB-pet-mem": "calpers/mod-b-petitioner-member.docx",
   "calpers-modB-resp-mem": "calpers/mod-b-respondent-member.docx",
   "calpers-modC-pet-mem": "calpers/mod-c-petitioner-member.docx",
