@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { County } from "@/data/templates";
+import { isLikelyValidEmail } from "@/lib/emailValidation";
+import { formatUsPhoneInput } from "@/lib/phoneUs";
 
 const COUNTIES: County[] = [
   "Los Angeles",
@@ -168,6 +170,8 @@ export default function EditMatterPage({
     });
   };
 
+  const phoneDigits = (value: string) => (value || "").replace(/\D/g, "");
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -264,40 +268,71 @@ export default function EditMatterPage({
             <input
               type="checkbox"
               checked={!!form[side].selfRepresented}
-              onChange={(e) => pf(side, "selfRepresented", e.target.checked)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                if (
+                  checked &&
+                  !confirm(
+                    "Mark this party as in pro per and remove their attorney from this matter?",
+                  )
+                ) {
+                  return;
+                }
+                pf(side, "selfRepresented", checked);
+                if (checked) {
+                  setForm({
+                    ...form,
+                    attorneys: {
+                      ...form.attorneys,
+                      [side]: { name: "" },
+                    },
+                  });
+                }
+              }}
             />
             Self-represented
           </label>
+          <p className="text-xs text-zinc-500">
+            Name and date-of-birth are permanent after save. If those must
+            change, delete this matter and start a fresh intake.
+          </p>
           <div className="grid gap-2 md:grid-cols-2">
             <input
-              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-zinc-400"
               placeholder="First"
               value={form[side].firstName}
-              onChange={(e) => pf(side, "firstName", e.target.value)}
+              readOnly
             />
             <input
-              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-zinc-400"
               placeholder="Last"
               value={form[side].lastName}
-              onChange={(e) => pf(side, "lastName", e.target.value)}
+              readOnly
             />
-            <input
-              className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
-              placeholder="FKA last name"
-              value={form[side].fkaLastName}
-              onChange={(e) => pf(side, "fkaLastName", e.target.value)}
-            />
+            {form[side].spouseType !== "Husband" && (
+              <input
+                className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+                placeholder="FKA last name"
+                value={form[side].fkaLastName}
+                onChange={(e) => pf(side, "fkaLastName", e.target.value)}
+              />
+            )}
             <input
               className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
               placeholder="Email"
               value={form[side].email}
-              onChange={(e) => pf(side, "email", e.target.value)}
+              onChange={(e) => pf(side, "email", e.target.value.trim())}
             />
+            {form[side].email && !isLikelyValidEmail(form[side].email) && (
+              <p className="text-xs text-rose-300">Enter a real email address.</p>
+            )}
             <input
               className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
               placeholder="Phone"
-              value={form[side].phone}
-              onChange={(e) => pf(side, "phone", e.target.value)}
+              value={formatUsPhoneInput(form[side].phone || "")}
+              onChange={(e) =>
+                pf(side, "phone", e.target.value.replace(/\D/g, "").slice(0, 10))
+              }
             />
             <input
               className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
@@ -320,6 +355,18 @@ export default function EditMatterPage({
         {!form.petitioner.selfRepresented && (
           <div className="space-y-2">
             <p className="text-xs text-zinc-400">Petitioner attorney</p>
+            <button
+              type="button"
+              className="text-xs text-rose-300 hover:underline"
+              onClick={() =>
+                setForm({
+                  ...form,
+                  attorneys: { ...form.attorneys, petitioner: { name: "" } },
+                })
+              }
+            >
+              Remove petitioner attorney
+            </button>
             {(["name", "bar", "email", "phone", "address1", "address2"] as const).map(
               (f) => (
                 <input
@@ -347,6 +394,18 @@ export default function EditMatterPage({
         {!form.respondent.selfRepresented && (
           <div className="space-y-2">
             <p className="text-xs text-zinc-400">Respondent attorney</p>
+            <button
+              type="button"
+              className="text-xs text-rose-300 hover:underline"
+              onClick={() =>
+                setForm({
+                  ...form,
+                  attorneys: { ...form.attorneys, respondent: { name: "" } },
+                })
+              }
+            >
+              Remove respondent attorney
+            </button>
             {(["name", "bar", "email", "phone", "address1", "address2"] as const).map(
               (f) => (
                 <input
@@ -430,7 +489,13 @@ export default function EditMatterPage({
       <button
         type="button"
         onClick={save}
-        disabled={saving}
+        disabled={
+          saving ||
+          !isLikelyValidEmail(form.petitioner.email) ||
+          !isLikelyValidEmail(form.respondent.email) ||
+          phoneDigits(form.petitioner.phone).length !== 10 ||
+          phoneDigits(form.respondent.phone).length !== 10
+        }
         className="rounded-xl bg-lime-800 px-6 py-3 font-semibold text-white disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save changes"}

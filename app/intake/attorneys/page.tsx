@@ -8,6 +8,8 @@ function AttyForm({ side }: { side: "petitioner" | "respondent" }) {
   const a = (attorneys as any)[side] || { name: "" };
   const update = (k: string, v: any) =>
     set({ attorneys: { ...attorneys, [side]: { ...a, [k]: v } } });
+  const clearAttorney = () =>
+    set({ attorneys: { ...attorneys, [side]: { name: "" } } });
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -17,6 +19,13 @@ function AttyForm({ side }: { side: "petitioner" | "respondent" }) {
       <p className="mb-4 text-xs text-zinc-400">
         Counsel of record for filings and service.
       </p>
+      <button
+        type="button"
+        className="mb-3 text-xs text-rose-300 hover:underline"
+        onClick={clearAttorney}
+      >
+        Remove attorney for this side
+      </button>
       <div className="grid gap-3 md:grid-cols-2">
         <input
           className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { enc } from "@/lib/crypto";
+import { isLikelyValidEmail } from "@/lib/emailValidation";
+import { formatUsPhoneStored, normalizeUsPhone10Digits } from "@/lib/phoneUs";
 import { prisma } from "@/lib/prisma";
 import { petitionerIsPlanMember } from "@/lib/intakeMember";
 
@@ -11,6 +12,22 @@ export async function POST(req: Request) {
 
     const p = intake.petitioner;
     const r = intake.respondent;
+    const pEmail = String(p.email || "").trim();
+    const rEmail = String(r.email || "").trim();
+    const pPhone = normalizeUsPhone10Digits(String(p.phone || ""));
+    const rPhone = normalizeUsPhone10Digits(String(r.phone || ""));
+    if (!isLikelyValidEmail(pEmail) || !isLikelyValidEmail(rEmail)) {
+      return NextResponse.json(
+        { error: "Please enter valid party email addresses." },
+        { status: 400 },
+      );
+    }
+    if (!pPhone || !rPhone) {
+      return NextResponse.json(
+        { error: "Party phone numbers must be valid 10-digit numbers." },
+        { status: 400 },
+      );
+    }
 
     const beneficiaryCreates = (intake.altpayeeBeneficiaries || [])
       .filter((b: any) => (b.fullName || "").trim())
@@ -30,13 +47,11 @@ export async function POST(req: Request) {
           lastName: p.lastName,
           fkaLastName: p.fkaLastName || null,
           selfRepresented: Boolean(p.selfRepresented),
-          email: p.email,
-          phone: p.phone,
+          email: pEmail,
+          phone: formatUsPhoneStored(pPhone),
           address1: p.address1,
           address2: p.address2,
           spouseType: p.spouseType,
-          ssnEnc: p.ssn ? enc(p.ssn) : null,
-          dobEnc: p.dob ? enc(p.dob) : null,
         },
       });
 
@@ -47,13 +62,11 @@ export async function POST(req: Request) {
           lastName: r.lastName,
           fkaLastName: r.fkaLastName || null,
           selfRepresented: Boolean(r.selfRepresented),
-          email: r.email,
-          phone: r.phone,
+          email: rEmail,
+          phone: formatUsPhoneStored(rPhone),
           address1: r.address1,
           address2: r.address2,
           spouseType: r.spouseType,
-          ssnEnc: r.ssn ? enc(r.ssn) : null,
-          dobEnc: r.dob ? enc(r.dob) : null,
         },
       });
 

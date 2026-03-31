@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthCookieName, verifySession } from "@/lib/auth";
-import { enc } from "@/lib/crypto";
+import { isLikelyValidEmail } from "@/lib/emailValidation";
+import { formatUsPhoneStored, normalizeUsPhone10Digits } from "@/lib/phoneUs";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -116,48 +117,66 @@ export async function PATCH(
 
       const pu = body.petitioner;
       if (pu && typeof pu === "object") {
+        const pEmail = pu.email != null ? String(pu.email).trim() : null;
+        const pPhoneDigits =
+          pu.phone !== undefined
+            ? normalizeUsPhone10Digits(String(pu.phone || ""))
+            : null;
+        if (pEmail != null && !isLikelyValidEmail(pEmail)) {
+          throw new Error("Petitioner email appears invalid.");
+        }
+        if (pu.phone !== undefined && !pPhoneDigits) {
+          throw new Error("Petitioner phone must be a valid 10-digit number.");
+        }
         await tx.party.update({
           where: { id: m.petitionerId },
           data: {
-            ...(pu.firstName != null && { firstName: pu.firstName }),
-            ...(pu.lastName != null && { lastName: pu.lastName }),
             ...(pu.fkaLastName !== undefined && {
               fkaLastName: pu.fkaLastName || null,
             }),
             ...(pu.selfRepresented !== undefined && {
               selfRepresented: Boolean(pu.selfRepresented),
             }),
-            ...(pu.email != null && { email: pu.email }),
-            ...(pu.phone !== undefined && { phone: pu.phone || null }),
+            ...(pEmail != null && { email: pEmail }),
+            ...(pu.phone !== undefined && {
+              phone: pPhoneDigits ? formatUsPhoneStored(pPhoneDigits) : null,
+            }),
             ...(pu.address1 != null && { address1: pu.address1 }),
             ...(pu.address2 !== undefined && { address2: pu.address2 || null }),
             ...(pu.spouseType !== undefined && { spouseType: pu.spouseType || null }),
-            ...(pu.ssn && { ssnEnc: enc(pu.ssn) }),
-            ...(pu.dob && { dobEnc: enc(pu.dob) }),
           },
         });
       }
 
       const ru = body.respondent;
       if (ru && typeof ru === "object") {
+        const rEmail = ru.email != null ? String(ru.email).trim() : null;
+        const rPhoneDigits =
+          ru.phone !== undefined
+            ? normalizeUsPhone10Digits(String(ru.phone || ""))
+            : null;
+        if (rEmail != null && !isLikelyValidEmail(rEmail)) {
+          throw new Error("Respondent email appears invalid.");
+        }
+        if (ru.phone !== undefined && !rPhoneDigits) {
+          throw new Error("Respondent phone must be a valid 10-digit number.");
+        }
         await tx.party.update({
           where: { id: m.respondentId },
           data: {
-            ...(ru.firstName != null && { firstName: ru.firstName }),
-            ...(ru.lastName != null && { lastName: ru.lastName }),
             ...(ru.fkaLastName !== undefined && {
               fkaLastName: ru.fkaLastName || null,
             }),
             ...(ru.selfRepresented !== undefined && {
               selfRepresented: Boolean(ru.selfRepresented),
             }),
-            ...(ru.email != null && { email: ru.email }),
-            ...(ru.phone !== undefined && { phone: ru.phone || null }),
+            ...(rEmail != null && { email: rEmail }),
+            ...(ru.phone !== undefined && {
+              phone: rPhoneDigits ? formatUsPhoneStored(rPhoneDigits) : null,
+            }),
             ...(ru.address1 != null && { address1: ru.address1 }),
             ...(ru.address2 !== undefined && { address2: ru.address2 || null }),
             ...(ru.spouseType !== undefined && { spouseType: ru.spouseType || null }),
-            ...(ru.ssn && { ssnEnc: enc(ru.ssn) }),
-            ...(ru.dob && { dobEnc: enc(ru.dob) }),
           },
         });
       }
@@ -221,8 +240,14 @@ export async function PATCH(
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     console.error(e);
+    const msg = e.message || "Update failed";
+    if (
+      /invalid|must be|appears/i.test(msg)
+    ) {
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
     return NextResponse.json(
-      { error: e.message || "Update failed" },
+      { error: msg },
       { status: 500 },
     );
   }
