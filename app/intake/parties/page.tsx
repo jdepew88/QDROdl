@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useIntake } from "../_state/useIntake";
+import { useIntake, type PartyForm } from "../_state/useIntake";
 import { formatUsPhoneInput } from "@/lib/phoneUs";
 import { isLikelyValidEmail } from "@/lib/emailValidation";
 
@@ -15,6 +15,13 @@ function PartyForm({ which }: { which: "petitioner" | "respondent" }) {
       [k]: v,
     };
     set(which === "petitioner" ? { petitioner: next } : { respondent: next });
+  };
+
+  /** Single zustand write — avoids stale state when setting spouseType + clearing FKA together. */
+  const patchParty = (patch: Partial<PartyForm>) => {
+    const key = which === "petitioner" ? "petitioner" : "respondent";
+    const current = useIntake.getState()[key];
+    set({ [key]: { ...current, ...patch } });
   };
 
   return (
@@ -85,10 +92,9 @@ function PartyForm({ which }: { which: "petitioner" | "respondent" }) {
             type="radio"
             name={`${which}-spouse`}
             checked={party.spouseType === "Husband"}
-            onChange={() => {
-              update("spouseType", "Husband");
-              update("fkaLastName", "");
-            }}
+            onChange={() =>
+              patchParty({ spouseType: "Husband", fkaLastName: "" })
+            }
           />
           Husband
         </label>
@@ -97,7 +103,7 @@ function PartyForm({ which }: { which: "petitioner" | "respondent" }) {
             type="radio"
             name={`${which}-spouse`}
             checked={party.spouseType === "Wife"}
-            onChange={() => update("spouseType", "Wife")}
+            onChange={() => patchParty({ spouseType: "Wife" })}
           />
           Wife
         </label>
@@ -146,7 +152,7 @@ function PartyForm({ which }: { which: "petitioner" | "respondent" }) {
 
 export default function PartiesStep() {
   const r = useRouter();
-  const { petitioner, respondent, requester, set } = useIntake();
+  const { petitioner, respondent } = useIntake();
 
   const validParty = (p: typeof petitioner) =>
     Boolean(
@@ -171,67 +177,6 @@ export default function PartiesStep() {
         for represented parties).
       </p>
 
-      <section className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-5">
-        <h2 className="text-base font-semibold text-stone-100">
-          About you (for this session)
-        </h2>
-        <p className="mt-1 text-xs text-zinc-400">
-          Identify whether you are one of the case parties.
-        </p>
-        <div className="mt-4 flex flex-wrap items-center gap-5 text-sm text-zinc-300">
-          <label className="inline-flex items-center gap-2">
-            <input
-              type="radio"
-              name="requester-party"
-              checked={requester.isParty === true}
-              onChange={() => set({ requester: { ...requester, isParty: true } })}
-            />
-            I am a party in this case
-          </label>
-          <label className="inline-flex items-center gap-2">
-            <input
-              type="radio"
-              name="requester-party"
-              checked={requester.isParty === false}
-              onChange={() =>
-                set({
-                  requester: { isParty: false, role: undefined, spouseType: undefined },
-                })
-              }
-            />
-            I am not a party
-          </label>
-        </div>
-        {requester.isParty && (
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <select
-              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
-              value={requester.role || ""}
-              onChange={(e) =>
-                set({ requester: { ...requester, role: e.target.value as any } })
-              }
-            >
-              <option value="">Select case role</option>
-              <option value="PETITIONER">Petitioner</option>
-              <option value="RESPONDENT">Respondent</option>
-            </select>
-            <select
-              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
-              value={requester.spouseType || ""}
-              onChange={(e) =>
-                set({
-                  requester: { ...requester, spouseType: e.target.value as any },
-                })
-              }
-            >
-              <option value="">Select husband/wife</option>
-              <option value="Husband">Husband</option>
-              <option value="Wife">Wife</option>
-            </select>
-          </div>
-        )}
-      </section>
-
       <div className="grid gap-6 md:grid-cols-2">
         <PartyForm which="petitioner" />
         <PartyForm which="respondent" />
@@ -249,7 +194,7 @@ export default function PartiesStep() {
           type="button"
           onClick={() => r.push("/intake/attorneys")}
           disabled={!canContinue}
-          className="rounded-xl bg-lime-800 px-6 py-3 font-semibold text-white"
+          className="rounded-xl bg-lime-800 px-6 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue
         </button>

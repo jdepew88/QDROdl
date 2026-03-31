@@ -89,11 +89,6 @@ export interface IntakeState {
       address2?: string;
     };
   };
-  requester: {
-    isParty: boolean | null;
-    role?: PartyRole;
-    spouseType?: SpouseType;
-  };
   altpayeeBeneficiaries: AltPayeeBeneficiaryForm[];
   set: (u: Partial<IntakeState>) => void;
 }
@@ -115,6 +110,7 @@ export const useIntake = create<IntakeState>((set) => ({
     lastName: "",
     email: "",
     address1: "",
+    spouseType: "Husband",
   },
   respondent: {
     role: "RESPONDENT",
@@ -122,11 +118,9 @@ export const useIntake = create<IntakeState>((set) => ({
     lastName: "",
     email: "",
     address1: "",
+    spouseType: "Wife",
   },
   attorneys: {},
-  requester: {
-    isParty: null,
-  },
   altpayeeBeneficiaries: emptyBeneficiarySlots(),
   set,
 }));
