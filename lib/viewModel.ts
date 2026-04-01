@@ -29,6 +29,10 @@ import {
   proPerCaptionBlock,
 } from "@/lib/signatureCaption";
 import { mergeNonmemberBeneficiaryRows } from "@/lib/nonmemberBeneficiariesMerge";
+import {
+  partyMergeAddressLine1,
+  partyMergeAddressLine2,
+} from "@/lib/partyAddressLines";
 
 function fmtDate(d: any) {
   if (!d) return "";
@@ -89,8 +93,8 @@ export async function buildViewModel(matterId: string) {
     : proPerCaptionBlock({
         fullName: petName,
         role: "Petitioner",
-        address1: m.petitioner.address1,
-        address2: m.petitioner.address2,
+        address1: partyMergeAddressLine1(m.petitioner),
+        address2: partyMergeAddressLine2(m.petitioner),
         phone: m.petitioner.phone,
       });
 
@@ -105,8 +109,8 @@ export async function buildViewModel(matterId: string) {
     : proPerCaptionBlock({
         fullName: respName,
         role: "Respondent",
-        address1: m.respondent.address1,
-        address2: m.respondent.address2,
+        address1: partyMergeAddressLine1(m.respondent),
+        address2: partyMergeAddressLine2(m.respondent),
         phone: m.respondent.phone,
       });
 
@@ -149,8 +153,8 @@ export async function buildViewModel(matterId: string) {
       side: memberSide,
       name_line: `${member.firstName} ${member.lastName}`,
       display_name: displayName(member),
-      address_line1: member.address1 || "",
-      address_line2: member.address2 || "",
+      address_line1: partyMergeAddressLine1(member),
+      address_line2: partyMergeAddressLine2(member),
       phone: member.phone || "",
       dob: safeDec(member.dobEnc),
       ssn_full: safeDec(member.ssnEnc),
@@ -169,8 +173,8 @@ export async function buildViewModel(matterId: string) {
     altpayee: {
       name_line: `${nonMember.firstName} ${nonMember.lastName}`,
       display_name: displayName(nonMember),
-      address_line1: nonMember.address1 || "",
-      address_line2: nonMember.address2 || "",
+      address_line1: partyMergeAddressLine1(nonMember),
+      address_line2: partyMergeAddressLine2(nonMember),
       phone: nonMember.phone || "",
       dob: safeDec(nonMember.dobEnc),
       ssn_full: safeDec(nonMember.ssnEnc),

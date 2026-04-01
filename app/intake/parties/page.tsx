@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useIntake, type PartyForm } from "../_state/useIntake";
 import { formatUsPhoneInput } from "@/lib/phoneUs";
 import { isLikelyValidEmail } from "@/lib/emailValidation";
+import { isValidUsPostalCode } from "@/lib/postalCodeUs";
 
 function PartyForm({ which }: { which: "petitioner" | "respondent" }) {
   const { petitioner, respondent, attorneys, set } = useIntake();
@@ -74,15 +75,45 @@ function PartyForm({ which }: { which: "petitioner" | "respondent" }) {
         />
         <input
           className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50 md:col-span-2"
-          placeholder="Address Line 1 (street)"
+          placeholder="Street address"
+          autoComplete="street-address"
           value={party.address1 || ""}
           onChange={(e) => update("address1", e.target.value)}
         />
         <input
           className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50 md:col-span-2"
-          placeholder="Address Line 2 (city, state ZIP)"
+          placeholder="Apartment, suite, unit (optional)"
+          autoComplete="address-line2"
           value={party.address2 || ""}
           onChange={(e) => update("address2", e.target.value)}
+        />
+        <input
+          className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+          placeholder="City"
+          autoComplete="address-level2"
+          value={party.city || ""}
+          onChange={(e) => update("city", e.target.value)}
+        />
+        <input
+          className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+          placeholder="State (e.g. CA)"
+          autoComplete="address-level1"
+          value={party.state || ""}
+          onChange={(e) => update("state", e.target.value.toUpperCase().slice(0, 2))}
+          maxLength={2}
+        />
+        <input
+          className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50 md:col-span-2"
+          placeholder="ZIP code"
+          autoComplete="postal-code"
+          inputMode="numeric"
+          value={party.postalCode || ""}
+          onChange={(e) =>
+            update(
+              "postalCode",
+              e.target.value.replace(/[^\d-]/g, "").slice(0, 10),
+            )
+          }
         />
       </div>
 
@@ -159,6 +190,10 @@ export default function PartiesStep() {
       p.firstName?.trim() &&
         p.lastName?.trim() &&
         p.address1?.trim() &&
+        p.city?.trim() &&
+        p.state?.trim() &&
+        p.postalCode?.trim() &&
+        isValidUsPostalCode(p.postalCode) &&
         p.email?.trim() &&
         isLikelyValidEmail(p.email) &&
         (p.phone || "").replace(/\D/g, "").length === 10 &&

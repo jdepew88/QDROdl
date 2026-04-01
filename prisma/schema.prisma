@@ -91,7 +91,11 @@ model Party {
   email             String
   phone             String?
   address1          String
+  // Optional apt / suite when city, state, postalCode are used for mailing line.
   address2          String?
+  city              String?
+  state             String?
+  postalCode        String?
   dobEnc            String?
   ssnEnc            String?
   spouseType        String?

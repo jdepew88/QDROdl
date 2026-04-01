@@ -18,6 +18,9 @@ export interface PartyForm {
   phone?: string;
   address1: string;
   address2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
   dob?: string;
   ssn?: string;
   spouseType?: SpouseType;
@@ -110,6 +113,9 @@ export const useIntake = create<IntakeState>((set) => ({
     lastName: "",
     email: "",
     address1: "",
+    city: "",
+    state: "",
+    postalCode: "",
     spouseType: "Husband",
   },
   respondent: {
@@ -118,6 +124,9 @@ export const useIntake = create<IntakeState>((set) => ({
     lastName: "",
     email: "",
     address1: "",
+    city: "",
+    state: "",
+    postalCode: "",
     spouseType: "Wife",
   },
   attorneys: {},

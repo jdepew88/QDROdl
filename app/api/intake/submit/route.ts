@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isLikelyValidEmail } from "@/lib/emailValidation";
 import { formatUsPhoneStored, normalizeUsPhone10Digits } from "@/lib/phoneUs";
+import { isValidUsPostalCode } from "@/lib/postalCodeUs";
 import { prisma } from "@/lib/prisma";
 import { petitionerIsPlanMember } from "@/lib/intakeMember";
 
@@ -28,6 +29,26 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+    const pc = (x: any) => ({
+      city: String(x.city || "").trim(),
+      state: String(x.state || "").trim().toUpperCase().slice(0, 2),
+      postal: String(x.postalCode || "").trim(),
+    });
+    const petM = pc(p);
+    const respM = pc(r);
+    if (
+      !petM.city ||
+      !petM.state ||
+      !isValidUsPostalCode(petM.postal) ||
+      !respM.city ||
+      !respM.state ||
+      !isValidUsPostalCode(respM.postal)
+    ) {
+      return NextResponse.json(
+        { error: "Each party needs a valid city, state, and ZIP code." },
+        { status: 400 },
+      );
+    }
 
     const beneficiaryCreates = (intake.altpayeeBeneficiaries || [])
       .filter((b: any) => (b.fullName || "").trim())
@@ -50,7 +71,10 @@ export async function POST(req: Request) {
           email: pEmail,
           phone: formatUsPhoneStored(pPhone),
           address1: p.address1,
-          address2: p.address2,
+          address2: p.address2 || null,
+          city: petM.city,
+          state: petM.state,
+          postalCode: petM.postal,
           spouseType: p.spouseType,
         },
       });
@@ -65,7 +89,10 @@ export async function POST(req: Request) {
           email: rEmail,
           phone: formatUsPhoneStored(rPhone),
           address1: r.address1,
-          address2: r.address2,
+          address2: r.address2 || null,
+          city: respM.city,
+          state: respM.state,
+          postalCode: respM.postal,
           spouseType: r.spouseType,
         },
       });

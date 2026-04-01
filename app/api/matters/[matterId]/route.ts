@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthCookieName, verifySession } from "@/lib/auth";
 import { isLikelyValidEmail } from "@/lib/emailValidation";
 import { formatUsPhoneStored, normalizeUsPhone10Digits } from "@/lib/phoneUs";
+import { isValidUsPostalCode } from "@/lib/postalCodeUs";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -128,6 +129,26 @@ export async function PATCH(
         if (pu.phone !== undefined && !pPhoneDigits) {
           throw new Error("Petitioner phone must be a valid 10-digit number.");
         }
+        const petMailingTouched =
+          pu.address1 !== undefined ||
+          pu.address2 !== undefined ||
+          pu.city !== undefined ||
+          pu.state !== undefined ||
+          pu.postalCode !== undefined;
+        const petCity = String(pu.city ?? "").trim();
+        const petState = String(pu.state ?? "")
+          .trim()
+          .toUpperCase()
+          .slice(0, 2);
+        const petZip = String(pu.postalCode ?? "").trim();
+        if (
+          petMailingTouched &&
+          (!petCity || petState.length !== 2 || !isValidUsPostalCode(petZip))
+        ) {
+          throw new Error(
+            "Petitioner needs city, a 2-letter state, and a valid ZIP code.",
+          );
+        }
         await tx.party.update({
           where: { id: m.petitionerId },
           data: {
@@ -143,6 +164,9 @@ export async function PATCH(
             }),
             ...(pu.address1 != null && { address1: pu.address1 }),
             ...(pu.address2 !== undefined && { address2: pu.address2 || null }),
+            ...(pu.city !== undefined && { city: petCity || null }),
+            ...(pu.state !== undefined && { state: petState || null }),
+            ...(pu.postalCode !== undefined && { postalCode: petZip || null }),
             ...(pu.spouseType !== undefined && { spouseType: pu.spouseType || null }),
           },
         });
@@ -161,6 +185,28 @@ export async function PATCH(
         if (ru.phone !== undefined && !rPhoneDigits) {
           throw new Error("Respondent phone must be a valid 10-digit number.");
         }
+        const respMailingTouched =
+          ru.address1 !== undefined ||
+          ru.address2 !== undefined ||
+          ru.city !== undefined ||
+          ru.state !== undefined ||
+          ru.postalCode !== undefined;
+        const respCity = String(ru.city ?? "").trim();
+        const respState = String(ru.state ?? "")
+          .trim()
+          .toUpperCase()
+          .slice(0, 2);
+        const respZip = String(ru.postalCode ?? "").trim();
+        if (
+          respMailingTouched &&
+          (!respCity ||
+            respState.length !== 2 ||
+            !isValidUsPostalCode(respZip))
+        ) {
+          throw new Error(
+            "Respondent needs city, a 2-letter state, and a valid ZIP code.",
+          );
+        }
         await tx.party.update({
           where: { id: m.respondentId },
           data: {
@@ -176,6 +222,9 @@ export async function PATCH(
             }),
             ...(ru.address1 != null && { address1: ru.address1 }),
             ...(ru.address2 !== undefined && { address2: ru.address2 || null }),
+            ...(ru.city !== undefined && { city: respCity || null }),
+            ...(ru.state !== undefined && { state: respState || null }),
+            ...(ru.postalCode !== undefined && { postalCode: respZip || null }),
             ...(ru.spouseType !== undefined && { spouseType: ru.spouseType || null }),
           },
         });

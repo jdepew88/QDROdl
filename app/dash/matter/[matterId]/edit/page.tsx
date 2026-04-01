@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import type { County } from "@/data/templates";
 import { isLikelyValidEmail } from "@/lib/emailValidation";
 import { formatUsPhoneInput } from "@/lib/phoneUs";
+import { tryParseLegacyCityStateZip } from "@/lib/partyAddressLines";
+import { isValidUsPostalCode } from "@/lib/postalCodeUs";
 
 const COUNTIES: County[] = [
   "Los Angeles",
@@ -39,6 +41,25 @@ export default function EditMatterPage({
         const m = j.matter;
         const pet = m.petitioner;
         const resp = m.respondent;
+
+        const splitPartyAddr = (party: typeof pet) => {
+          let city = party.city || "";
+          let state = party.state || "";
+          let postalCode = party.postalCode || "";
+          let address2 = party.address2 || "";
+          if (!city && !state && !postalCode) {
+            const parsed = tryParseLegacyCityStateZip(address2);
+            if (parsed) {
+              city = parsed.city;
+              state = parsed.state;
+              postalCode = parsed.postalCode;
+              address2 = "";
+            }
+          }
+          return { city, state, postalCode, address2 };
+        };
+        const petAddr = splitPartyAddr(pet);
+        const respAddr = splitPartyAddr(resp);
         const petAt = m.attorneys?.find((a: any) => a.side === "PETITIONER");
         const respAt = m.attorneys?.find((a: any) => a.side === "RESPONDENT");
         setForm({
@@ -58,7 +79,10 @@ export default function EditMatterPage({
             email: pet.email,
             phone: pet.phone || "",
             address1: pet.address1,
-            address2: pet.address2 || "",
+            address2: petAddr.address2,
+            city: petAddr.city,
+            state: petAddr.state,
+            postalCode: petAddr.postalCode,
             spouseType: pet.spouseType || "Husband",
           },
           respondent: {
@@ -69,7 +93,10 @@ export default function EditMatterPage({
             email: resp.email,
             phone: resp.phone || "",
             address1: resp.address1,
-            address2: resp.address2 || "",
+            address2: respAddr.address2,
+            city: respAddr.city,
+            state: respAddr.state,
+            postalCode: respAddr.postalCode,
             spouseType: resp.spouseType || "Wife",
           },
           attorneys: {
@@ -130,8 +157,20 @@ export default function EditMatterPage({
           doj: form.doj || null,
           concurrentWithJudgment: form.concurrentWithJudgment,
           petitionerIsMember: form.petitionerIsMember,
-          petitioner: form.petitioner,
-          respondent: form.respondent,
+          petitioner: {
+            ...form.petitioner,
+            state: String(form.petitioner.state || "")
+              .trim()
+              .toUpperCase()
+              .slice(0, 2),
+          },
+          respondent: {
+            ...form.respondent,
+            state: String(form.respondent.state || "")
+              .trim()
+              .toUpperCase()
+              .slice(0, 2),
+          },
           attorneys: form.attorneys,
           altpayeeBeneficiaries: form.beneficiaries.filter(
             (b: any) => (b.fullName || "").trim(),
@@ -336,15 +375,52 @@ export default function EditMatterPage({
             />
             <input
               className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
-              placeholder="Address 1"
+              placeholder="Street address"
+              autoComplete="street-address"
               value={form[side].address1}
               onChange={(e) => pf(side, "address1", e.target.value)}
             />
             <input
               className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
-              placeholder="Address 2"
+              placeholder="Apartment, suite, unit (optional)"
+              autoComplete="address-line2"
               value={form[side].address2}
               onChange={(e) => pf(side, "address2", e.target.value)}
+            />
+            <input
+              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="City"
+              autoComplete="address-level2"
+              value={form[side].city}
+              onChange={(e) => pf(side, "city", e.target.value)}
+            />
+            <input
+              className="rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="State"
+              autoComplete="address-level1"
+              maxLength={2}
+              value={form[side].state}
+              onChange={(e) =>
+                pf(
+                  side,
+                  "state",
+                  e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 2),
+                )
+              }
+            />
+            <input
+              className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+              placeholder="ZIP code"
+              autoComplete="postal-code"
+              inputMode="numeric"
+              value={form[side].postalCode}
+              onChange={(e) =>
+                pf(
+                  side,
+                  "postalCode",
+                  e.target.value.replace(/[^\d-]/g, "").slice(0, 10),
+                )
+              }
             />
           </div>
         </section>
@@ -494,7 +570,13 @@ export default function EditMatterPage({
           !isLikelyValidEmail(form.petitioner.email) ||
           !isLikelyValidEmail(form.respondent.email) ||
           phoneDigits(form.petitioner.phone).length !== 10 ||
-          phoneDigits(form.respondent.phone).length !== 10
+          phoneDigits(form.respondent.phone).length !== 10 ||
+          !form.petitioner.city?.trim() ||
+          !form.petitioner.state?.trim() ||
+          !isValidUsPostalCode(form.petitioner.postalCode || "") ||
+          !form.respondent.city?.trim() ||
+          !form.respondent.state?.trim() ||
+          !isValidUsPostalCode(form.respondent.postalCode || "")
         }
         className="rounded-xl bg-lime-800 px-6 py-3 font-semibold text-white disabled:opacity-50"
       >
