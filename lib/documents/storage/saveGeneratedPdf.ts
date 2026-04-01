@@ -25,6 +25,10 @@ export async function saveGeneratedPdf(opts: {
   version: number;
 }): Promise<SavedGeneratedPdf> {
   const { matterId, pdfBuffer, stem, version } = opts;
+  const pdfHeader = pdfBuffer.subarray(0, 5).toString("utf8");
+  if (pdfBuffer.length < 1024 || pdfHeader !== "%PDF-") {
+    throw new Error("Generated file is not a valid PDF buffer.");
+  }
   const safeMatter = path.basename(matterId).replace(/[^a-zA-Z0-9_-]/g, "");
   if (!safeMatter) {
     throw new Error("Invalid matter id for storage path.");

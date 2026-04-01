@@ -259,14 +259,23 @@ export default function MatterDocumentsPage({
             {preapprovalLoading ? "Generating PDF…" : "Generate Preapproval Letter"}
           </button>
           {preapprovalDoc && (
-            <a
-              href={preapprovalDoc.fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-lg border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-stone-100 hover:bg-white/15"
-            >
-              Open PDF (v{preapprovalDoc.version})
-            </a>
+            <>
+              <a
+                href={preapprovalDoc.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-lg border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-stone-100 hover:bg-white/15"
+              >
+                Open PDF (v{preapprovalDoc.version})
+              </a>
+              <a
+                href={preapprovalDoc.fileUrl}
+                download
+                className="rounded-lg border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-stone-100 hover:bg-white/15"
+              >
+                Download PDF
+              </a>
+            </>
           )}
         </div>
         {preapprovalDoc && (
