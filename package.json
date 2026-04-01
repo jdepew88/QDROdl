@@ -18,15 +18,16 @@
     "docx-templates": "^4.12.1",
     "next": "14.2.5",
     "nodemailer": "^8.0.4",
+    "puppeteer": "^24.40.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "stripe": "^16.0.0",
     "zustand": "^4.5.4"
   },
   "devDependencies": {
-    "jszip": "^3.10.1",
     "@types/react": "19.1.10",
     "autoprefixer": "^10.4.19",
+    "jszip": "^3.10.1",
     "postcss": "^8.4.41",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.10",

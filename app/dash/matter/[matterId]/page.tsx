@@ -30,6 +30,14 @@ export default function MatterDocumentsPage({
     null,
   );
   const [letterError, setLetterError] = useState<string | null>(null);
+  const [preapprovalLoading, setPreapprovalLoading] = useState(false);
+  const [preapprovalError, setPreapprovalError] = useState<string | null>(null);
+  const [preapprovalDoc, setPreapprovalDoc] = useState<{
+    fileUrl: string;
+    title: string;
+    version: number;
+    createdAt: string;
+  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +65,35 @@ export default function MatterDocumentsPage({
     error,
     files.length,
   ]);
+
+  const generatePreapprovalLetter = async () => {
+    setPreapprovalError(null);
+    setPreapprovalDoc(null);
+    setPreapprovalLoading(true);
+    try {
+      const res = await fetch("/api/documents/preapproval-letter/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ matterId }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(j.error || `Generation failed (${res.status})`);
+      }
+      if (j.success && j.document) {
+        setPreapprovalDoc({
+          fileUrl: j.document.fileUrl,
+          title: j.document.title,
+          version: j.document.version,
+          createdAt: j.document.createdAt,
+        });
+      }
+    } catch (e: any) {
+      setPreapprovalError(e.message || "Could not generate preapproval letter");
+    } finally {
+      setPreapprovalLoading(false);
+    }
+  };
 
   const downloadLetter = async (letterKey: LetterTemplateKey) => {
     setLetterError(null);
@@ -196,6 +233,49 @@ export default function MatterDocumentsPage({
           {letterError}
         </div>
       )}
+
+      {preapprovalError && (
+        <div className="mt-6 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+          {preapprovalError}
+        </div>
+      )}
+
+      <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h2 className="text-lg font-semibold text-lime-100">
+          Plan preapproval (PDF)
+        </h2>
+        <p className="mt-2 text-sm text-zinc-400">
+          Generate a CalPERS Model A preliminary-review letter from this
+          matter&apos;s database record (HTML → PDF on the server). Requires
+          CalPERS, not in pay, Model A.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={generatePreapprovalLetter}
+            disabled={preapprovalLoading}
+            className="rounded-lg border border-lime-600/50 bg-lime-950/40 px-4 py-2.5 text-sm font-semibold text-lime-100 hover:bg-lime-900/40 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {preapprovalLoading ? "Generating PDF…" : "Generate Preapproval Letter"}
+          </button>
+          {preapprovalDoc && (
+            <a
+              href={preapprovalDoc.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-semibold text-stone-100 hover:bg-white/15"
+            >
+              Open PDF (v{preapprovalDoc.version})
+            </a>
+          )}
+        </div>
+        {preapprovalDoc && (
+          <p className="mt-3 text-xs text-zinc-500">
+            {preapprovalDoc.title} —{" "}
+            {new Date(preapprovalDoc.createdAt).toLocaleString()}
+          </p>
+        )}
+      </section>
 
       <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6">
         <h2 className="text-lg font-semibold text-lime-100">

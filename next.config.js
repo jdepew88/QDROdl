@@ -9,7 +9,9 @@ module.exports = {
       },
     ],
   },
-  experimental: { serverComponentsExternalPackages: ["archiver"] },
+  experimental: {
+    serverComponentsExternalPackages: ["archiver", "puppeteer"],
+  },
   async headers() {
     if (process.env.NODE_ENV !== "development") return [];
     return [

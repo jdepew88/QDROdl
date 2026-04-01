@@ -62,9 +62,28 @@ model Matter {
   updatedAt              DateTime               @updatedAt
   attorneys              AttorneyInfo[]
   altPayeeBeneficiaries  AltPayeeBeneficiary[]
+  generatedDocuments     GeneratedDocument[]
   petitioner             Party                  @relation("Petitioner", fields: [petitionerId], references: [id])
   respondent             Party                  @relation("Respondent", fields: [respondentId], references: [id])
   plans                  PlanSelection[]
+}
+
+/// Server-generated lifecycle PDFs / exports (preapproval letter, notices, etc.). Source of truth remains Matter / Party rows.
+model GeneratedDocument {
+  id           String   @id @default(cuid())
+  matterId     String
+  type         String
+  title        String
+  filePath     String
+  fileUrl      String
+  version      Int      @default(1)
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  matter Matter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId])
+  @@index([type])
 }
 
 // Designated beneficiaries of the non-member spouse (alternate payee), e.g. CalPERS Model B.
