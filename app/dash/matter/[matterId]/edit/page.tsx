@@ -71,6 +71,10 @@ export default function EditMatterPage({
           doj: m.doj ? m.doj.slice(0, 10) : "",
           concurrentWithJudgment: m.concurrentWithJudgment,
           petitionerIsMember: m.petitionerIsMember,
+          // Payment responsibility "bones" (entered by parties in this dashboard step).
+          splitBill: m.splitBill,
+          petitionerShareCents: m.petitionerShareCents ?? null,
+          respondentShareCents: m.respondentShareCents ?? null,
           petitioner: {
             firstName: pet.firstName,
             lastName: pet.lastName,
@@ -157,6 +161,15 @@ export default function EditMatterPage({
           doj: form.doj || null,
           concurrentWithJudgment: form.concurrentWithJudgment,
           petitionerIsMember: form.petitionerIsMember,
+          splitBill: Boolean(form.splitBill),
+          petitionerShareCents:
+            form.petitionerShareCents == null
+              ? null
+              : Number(form.petitionerShareCents),
+          respondentShareCents:
+            form.respondentShareCents == null
+              ? null
+              : Number(form.respondentShareCents),
           petitioner: {
             ...form.petitioner,
             state: String(form.petitioner.state || "")
@@ -210,6 +223,15 @@ export default function EditMatterPage({
   };
 
   const phoneDigits = (value: string) => (value || "").replace(/\D/g, "");
+  const centsToDollars = (cents: number | null | undefined) =>
+    cents == null ? "" : (cents / 100).toFixed(2);
+  const dollarsToCentsOrNull = (raw: string) => {
+    const t = raw.trim();
+    if (!t) return null;
+    const n = Number(t);
+    if (!Number.isFinite(n)) return null;
+    return Math.round(n * 100);
+  };
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
@@ -295,6 +317,71 @@ export default function EditMatterPage({
           />
           Petitioner is plan member (otherwise respondent is)
         </label>
+      </section>
+
+      <section className="mb-8 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h2 className="font-semibold text-stone-100">Payment responsibility (skeleton)</h2>
+        <label className="flex items-center gap-2 text-sm text-zinc-300">
+          <input
+            type="checkbox"
+            checked={!!form.splitBill}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setForm({
+                ...form,
+                splitBill: checked,
+                petitionerShareCents: checked ? (form.petitionerShareCents ?? 0) : null,
+                respondentShareCents: checked ? (form.respondentShareCents ?? 0) : null,
+              });
+            }}
+          />
+          Split the total cost of the service between the parties
+        </label>
+
+        {form.splitBill && (
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-xl border border-white/10 bg-zinc-950/20 p-4">
+              <p className="text-xs font-medium text-zinc-400">
+                Petitioner share ({form.petitioner.spouseType || "Husband"})
+              </p>
+              <label className="mt-2 block text-xs text-zinc-500">
+                Amount (USD)
+                <input
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+                  value={centsToDollars(form.petitionerShareCents)}
+                  onChange={(e) => {
+                    const cents = dollarsToCentsOrNull(e.target.value);
+                    setForm({ ...form, petitionerShareCents: cents });
+                  }}
+                  inputMode="decimal"
+                />
+              </label>
+            </div>
+
+            <div className="rounded-xl border border-white/10 bg-zinc-950/20 p-4">
+              <p className="text-xs font-medium text-zinc-400">
+                Respondent share ({form.respondent.spouseType || "Wife"})
+              </p>
+              <label className="mt-2 block text-xs text-zinc-500">
+                Amount (USD)
+                <input
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+                  value={centsToDollars(form.respondentShareCents)}
+                  onChange={(e) => {
+                    const cents = dollarsToCentsOrNull(e.target.value);
+                    setForm({ ...form, respondentShareCents: cents });
+                  }}
+                  inputMode="decimal"
+                />
+              </label>
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-zinc-500">
+          For special circumstances (example: 80/20 splits), contact support via email or a support ticket so staff can
+          confirm the exact split. For now, this captures the split amounts so we can prepare the draft package workflow later.
+        </p>
       </section>
 
       {(["petitioner", "respondent"] as const).map((side) => (

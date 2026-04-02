@@ -46,6 +46,12 @@ export default function MatterDocumentsPage({
   const [inventory, setInventory] = useState<DraftInventory | null>(null);
   const [matterPlans, setMatterPlans] = useState<MatterPlan[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [payment, setPayment] = useState<{
+    splitBill: boolean;
+    petitionerShareCents: number | null;
+    respondentShareCents: number | null;
+    amountDueCents: number | null;
+  } | null>(null);
   const [uploads, setUploads] = useState<
     {
       id: string;
@@ -121,6 +127,14 @@ export default function MatterDocumentsPage({
                 planKey: p.planKey,
               })),
             );
+          }
+          if (!cancelled) {
+            setPayment({
+              splitBill: Boolean(mj?.matter?.splitBill),
+              petitionerShareCents: mj?.matter?.petitionerShareCents ?? null,
+              respondentShareCents: mj?.matter?.respondentShareCents ?? null,
+              amountDueCents: mj?.matter?.amountDueCents ?? null,
+            });
           }
           await reloadUploads();
         }
@@ -340,6 +354,66 @@ export default function MatterDocumentsPage({
           </div>
         </div>
       </section>
+
+      {payment && (
+        <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-lg font-semibold text-lime-100">
+            Payment responsibility (Stripe skeleton)
+          </h2>
+          <p className="mt-2 text-sm text-zinc-400">
+            This step captures who pays what so we can prepare the invoice
+            after the plan questionnaire. For now, draft generation is not
+            blocked by Stripe.
+          </p>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-white/10 bg-zinc-950/20 p-4">
+              <div className="text-xs font-medium text-zinc-500">Split billing</div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {payment.splitBill ? "Yes" : "No"}
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-zinc-950/20 p-4">
+              <div className="text-xs font-medium text-zinc-500">
+                Petitioner share
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {payment.petitionerShareCents != null
+                  ? `$${(payment.petitionerShareCents / 100).toFixed(2)}`
+                  : "—"}
+              </div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-zinc-950/20 p-4">
+              <div className="text-xs font-medium text-zinc-500">
+                Respondent share
+              </div>
+              <div className="mt-1 text-sm text-zinc-200">
+                {payment.respondentShareCents != null
+                  ? `$${(payment.respondentShareCents / 100).toFixed(2)}`
+                  : "—"}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="text-sm text-zinc-400">
+              Total due (if split shares are set):{" "}
+              <span className="font-semibold text-zinc-200">
+                {payment.amountDueCents != null
+                  ? `$${(payment.amountDueCents / 100).toFixed(2)}`
+                  : "—"}
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled
+              className="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-300 opacity-60"
+            >
+              Stripe checkout (coming soon)
+            </button>
+          </div>
+        </section>
+      )}
 
       {error && (
         <div className="mt-8 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">

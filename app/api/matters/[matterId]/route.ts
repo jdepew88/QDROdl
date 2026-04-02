@@ -14,9 +14,6 @@ const STAFF_ONLY_PATCH_KEYS = new Set([
   "quotedMailingCents",
   "quotedFilingCents",
   "amountDueCents",
-  "splitBill",
-  "petitionerShareCents",
-  "respondentShareCents",
   "petitionerPaidAt",
   "respondentPaidAt",
   "planAdminEmail",
@@ -148,18 +145,6 @@ export async function PATCH(
           mdata.quotedFilingCents = Number(body.quotedFilingCents);
         if (body.amountDueCents != null)
           mdata.amountDueCents = Number(body.amountDueCents);
-        if (body.splitBill !== undefined)
-          mdata.splitBill = Boolean(body.splitBill);
-        if (body.petitionerShareCents !== undefined)
-          mdata.petitionerShareCents =
-            body.petitionerShareCents == null
-              ? null
-              : Number(body.petitionerShareCents);
-        if (body.respondentShareCents !== undefined)
-          mdata.respondentShareCents =
-            body.respondentShareCents == null
-              ? null
-              : Number(body.respondentShareCents);
         if (body.petitionerPaidAt !== undefined) {
           mdata.petitionerPaidAt = body.petitionerPaidAt
             ? new Date(body.petitionerPaidAt)
@@ -175,6 +160,47 @@ export async function PATCH(
         if (body.notesInternal !== undefined)
           mdata.notesInternal = body.notesInternal || null;
       }
+
+      // Party-editable payment responsibility "bones":
+      // allow parties to set split + their share amounts (cents).
+      if (body.splitBill !== undefined) {
+        mdata.splitBill = Boolean(body.splitBill);
+      }
+      const nextSplitBill =
+        body.splitBill !== undefined ? Boolean(body.splitBill) : m.splitBill;
+
+      const nextPetShare =
+        body.petitionerShareCents !== undefined
+          ? body.petitionerShareCents == null
+            ? null
+            : Number(body.petitionerShareCents)
+          : m.petitionerShareCents;
+
+      const nextRespShare =
+        body.respondentShareCents !== undefined
+          ? body.respondentShareCents == null
+            ? null
+            : Number(body.respondentShareCents)
+          : m.respondentShareCents;
+
+      if (body.petitionerShareCents !== undefined) {
+        mdata.petitionerShareCents = nextPetShare;
+      }
+      if (body.respondentShareCents !== undefined) {
+        mdata.respondentShareCents = nextRespShare;
+      }
+
+      // Derive total due when both shares are available.
+      if (
+        nextSplitBill &&
+        nextPetShare != null &&
+        nextRespShare != null &&
+        Number.isFinite(nextPetShare) &&
+        Number.isFinite(nextRespShare)
+      ) {
+        mdata.amountDueCents = nextPetShare + nextRespShare;
+      }
+
       if (body.caseNumber != null) mdata.caseNumber = String(body.caseNumber);
       if (body.county != null) mdata.county = String(body.county);
       if (body.otherCounty !== undefined) {
