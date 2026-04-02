@@ -1,28 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthCookieName, verifySession } from "@/lib/auth";
 import { isLikelyValidEmail } from "@/lib/emailValidation";
 import { formatUsPhoneStored, normalizeUsPhone10Digits } from "@/lib/phoneUs";
 import { isValidUsPostalCode } from "@/lib/postalCodeUs";
 import { prisma } from "@/lib/prisma";
+import { requireMatterAccess } from "@/lib/matterAccessHttp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function unauthorized() {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
-
-function getSession(req: NextRequest) {
-  const token = req.cookies.get(getAuthCookieName())?.value || null;
-  return verifySession(token);
-}
+const STAFF_ONLY_PATCH_KEYS = new Set([
+  "workflowStatus",
+  "quotedOrderPrepCents",
+  "quotedMailingCents",
+  "quotedFilingCents",
+  "amountDueCents",
+  "splitBill",
+  "petitionerShareCents",
+  "respondentShareCents",
+  "petitionerPaidAt",
+  "respondentPaidAt",
+  "planAdminEmail",
+  "notesInternal",
+  "planJoinderUpdates",
+]);
 
 export async function GET(
   req: NextRequest,
   { params }: { params: { matterId: string } },
 ) {
-  if (!getSession(req)) return unauthorized();
   const { matterId } = params;
+  const gate = await requireMatterAccess(req, matterId);
+  if (gate.ok === false) return gate.response;
+
   try {
     const m = await prisma.matter.findUnique({
       where: { id: matterId },
@@ -32,12 +41,20 @@ export async function GET(
         attorneys: true,
         altPayeeBeneficiaries: { orderBy: { sortOrder: "asc" } },
         plans: true,
+        uploads: { orderBy: { createdAt: "desc" } },
+        generatedDocuments: { orderBy: { createdAt: "desc" } },
+        ...(gate.isAdmin
+          ? {
+              feeLedgerEntries: { orderBy: { recordedAt: "desc" }, take: 100 },
+              communicationLogs: { orderBy: { createdAt: "desc" }, take: 50 },
+            }
+          : {}),
       },
     });
     if (!m) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ matter: m });
+    return NextResponse.json({ matter: m, isSuperAdmin: gate.isAdmin });
   } catch (e: any) {
     console.error(e);
     return NextResponse.json(
@@ -51,12 +68,23 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { matterId: string } },
 ) {
-  if (!getSession(req)) return unauthorized();
   const { matterId } = params;
+  const gate = await requireMatterAccess(req, matterId);
+  if (gate.ok === false) return gate.response;
+  if (!gate.isAdmin) {
+    return NextResponse.json(
+      { error: "Only staff can delete matters." },
+      { status: 403 },
+    );
+  }
   try {
     await prisma.$transaction(async (tx) => {
       const m = await tx.matter.findUnique({ where: { id: matterId } });
       if (!m) throw new Error("NOT_FOUND");
+      await tx.feeLedgerEntry.deleteMany({ where: { matterId } });
+      await tx.matterUpload.deleteMany({ where: { matterId } });
+      await tx.communicationLog.deleteMany({ where: { matterId } });
+      await tx.generatedDocument.deleteMany({ where: { matterId } });
       await tx.altPayeeBeneficiary.deleteMany({ where: { matterId } });
       await tx.planSelection.deleteMany({ where: { matterId } });
       await tx.attorneyInfo.deleteMany({ where: { matterId } });
@@ -81,11 +109,24 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { matterId: string } },
 ) {
-  if (!getSession(req)) return unauthorized();
   const { matterId } = params;
+  const gate = await requireMatterAccess(req, matterId);
+  if (gate.ok === false) return gate.response;
+
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  if (!gate.isAdmin) {
+    for (const k of Object.keys(body)) {
+      if (STAFF_ONLY_PATCH_KEYS.has(k)) {
+        return NextResponse.json(
+          { error: "You cannot update staff-only fields on this matter." },
+          { status: 403 },
+        );
+      }
+    }
   }
 
   try {
@@ -96,6 +137,44 @@ export async function PATCH(
 
     await prisma.$transaction(async (tx) => {
       const mdata: Record<string, unknown> = {};
+      if (gate.isAdmin) {
+        if (body.workflowStatus != null)
+          mdata.workflowStatus = String(body.workflowStatus);
+        if (body.quotedOrderPrepCents != null)
+          mdata.quotedOrderPrepCents = Number(body.quotedOrderPrepCents);
+        if (body.quotedMailingCents != null)
+          mdata.quotedMailingCents = Number(body.quotedMailingCents);
+        if (body.quotedFilingCents != null)
+          mdata.quotedFilingCents = Number(body.quotedFilingCents);
+        if (body.amountDueCents != null)
+          mdata.amountDueCents = Number(body.amountDueCents);
+        if (body.splitBill !== undefined)
+          mdata.splitBill = Boolean(body.splitBill);
+        if (body.petitionerShareCents !== undefined)
+          mdata.petitionerShareCents =
+            body.petitionerShareCents == null
+              ? null
+              : Number(body.petitionerShareCents);
+        if (body.respondentShareCents !== undefined)
+          mdata.respondentShareCents =
+            body.respondentShareCents == null
+              ? null
+              : Number(body.respondentShareCents);
+        if (body.petitionerPaidAt !== undefined) {
+          mdata.petitionerPaidAt = body.petitionerPaidAt
+            ? new Date(body.petitionerPaidAt)
+            : null;
+        }
+        if (body.respondentPaidAt !== undefined) {
+          mdata.respondentPaidAt = body.respondentPaidAt
+            ? new Date(body.respondentPaidAt)
+            : null;
+        }
+        if (body.planAdminEmail !== undefined)
+          mdata.planAdminEmail = body.planAdminEmail || null;
+        if (body.notesInternal !== undefined)
+          mdata.notesInternal = body.notesInternal || null;
+      }
       if (body.caseNumber != null) mdata.caseNumber = String(body.caseNumber);
       if (body.county != null) mdata.county = String(body.county);
       if (body.otherCounty !== undefined) {
@@ -282,6 +361,19 @@ export async function PATCH(
           }));
         if (rows.length) {
           await tx.altPayeeBeneficiary.createMany({ data: rows });
+        }
+      }
+
+      if (gate.isAdmin && Array.isArray(body.planJoinderUpdates)) {
+        for (const row of body.planJoinderUpdates as {
+          id?: string;
+          joinderRequired?: boolean;
+        }[]) {
+          if (!row?.id || typeof row.id !== "string") continue;
+          await tx.planSelection.updateMany({
+            where: { id: row.id, matterId },
+            data: { joinderRequired: Boolean(row.joinderRequired) },
+          });
         }
       }
     });

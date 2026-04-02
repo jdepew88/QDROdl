@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthCookieName, verifySession } from "@/lib/auth";
 import {
   LETTER_TEMPLATE_REGISTRY,
   type LetterTemplateKey,
@@ -10,22 +9,19 @@ import {
   saveDraftBuffer,
   templateFileExists,
 } from "@/lib/renderTemplates";
+import { requireMatterAccess } from "@/lib/matterAccessHttp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function unauthorized() {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
 
 export async function POST(
   req: NextRequest,
   { params }: { params: { matterId: string } },
 ) {
-  const token = req.cookies.get(getAuthCookieName())?.value || null;
-  if (!verifySession(token)) return unauthorized();
-
   const { matterId } = params;
+  const gate = await requireMatterAccess(req, matterId);
+  if (gate.ok === false) return gate.response;
+
   const body = await req.json().catch(() => ({}));
   const letterKey = body?.letterKey as LetterTemplateKey | undefined;
   if (!letterKey || !(letterKey in LETTER_TEMPLATE_REGISTRY)) {

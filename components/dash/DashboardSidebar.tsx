@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import LogoutButton from "@/components/LogoutButton";
 import { DASH_NAV_MAIN } from "@/data/dashboardNav";
 
@@ -14,6 +15,23 @@ function isActive(pathname: string, href: string) {
 
 export default function DashboardSidebar() {
   const pathname = usePathname() || "";
+  const [staff, setStaff] = useState(false);
+
+  useEffect(() => {
+    let c = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const j = await res.json();
+        if (!c && j?.isSuperAdmin) setStaff(true);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      c = true;
+    };
+  }, []);
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-white/10 bg-zinc-950/95 text-zinc-200">
@@ -48,6 +66,22 @@ export default function DashboardSidebar() {
         })}
 
         <div className="my-3 border-t border-white/10" />
+
+        {staff && (
+          <Link
+            href="/dash/super-admin"
+            className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              pathname.startsWith("/dash/super-admin")
+                ? "bg-violet-900/50 text-violet-100"
+                : "text-violet-300/90 hover:bg-white/5 hover:text-violet-100"
+            }`}
+          >
+            Super admin
+            <span className="mt-0.5 block text-xs font-normal text-zinc-500">
+              Staff dashboard only
+            </span>
+          </Link>
+        )}
 
         <Link
           href="/intake/plans"

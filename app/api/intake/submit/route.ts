@@ -138,6 +138,9 @@ export async function POST(req: Request) {
           petitionerId: petitioner.id,
           respondentId: respondent.id,
 
+          intakeCompletedAt: new Date(),
+          workflowStatus: "OPEN",
+
           petitionerIsMember: petitionerIsPlanMember(
             intake.petitioner,
             intake.respondent,

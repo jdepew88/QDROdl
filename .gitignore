@@ -16,6 +16,9 @@ npm-debug.log*
 # prisma
 # keep schema; ignore local DB files if any
 
+# party uploads (served from /matter-uploads/...)
+public/matter-uploads/
+
 # IDE
 .idea/
 .vscode/

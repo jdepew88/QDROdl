@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [matters, setMatters] = useState<MatterListItem[]>([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +44,7 @@ export default function DashboardPage() {
         }
         if (!cancelled && json?.message) setNotice(String(json.message));
         if (!cancelled) setMatters(json?.matters || []);
+        if (!cancelled) setIsSuperAdmin(Boolean(json?.isSuperAdmin));
       } catch (e: any) {
         if (!cancelled) setError(e.message || "Failed to load dashboard");
       } finally {
@@ -72,9 +74,9 @@ export default function DashboardPage() {
               Overview
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-zinc-300">
-              Case list and drafts stored for each matter. After you generate from
-              review, files are kept on the server so they can be downloaded again
-              from the matter page (single files or all as ZIP) as often as needed.
+              Matters where you are listed as petitioner or respondent (same email as
+              login) appear here. Open a case to download drafts by plan, upload your
+              judgment and plan statements, and grab letters.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -102,7 +104,9 @@ export default function DashboardPage() {
           <div className="mt-2 text-2xl font-semibold text-stone-50">
             {loading ? "—" : matters.length}
           </div>
-          <div className="mt-1 text-sm text-zinc-300">Last 25 shown</div>
+          <div className="mt-1 text-sm text-zinc-300">
+            {isSuperAdmin ? "Staff: up to 500" : "Your linked cases"}
+          </div>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
           <div className="text-xs font-semibold tracking-wide text-zinc-400">
@@ -154,7 +158,11 @@ export default function DashboardPage() {
 
       {emptyState && (
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5 text-sm text-zinc-200">
-          No matters yet. Start an intake to create your first matter.
+          <p>No matters linked to this login yet.</p>
+          <p className="mt-2 text-zinc-400">
+            Start an intake with party emails that match this account, or ask staff to
+            align your login email with your case contact email.
+          </p>
         </div>
       )}
 
@@ -206,32 +214,34 @@ export default function DashboardPage() {
                     >
                       New drafts
                     </Link>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (
-                          !confirm(
-                            `Delete matter ${m.caseNumber}? This cannot be undone.`,
+                    {isSuperAdmin && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (
+                            !confirm(
+                              `Staff delete: matter ${m.caseNumber}? This cannot be undone.`,
+                            )
                           )
-                        )
-                          return;
-                        try {
-                          const res = await fetch(`/api/matters/${m.id}`, {
-                            method: "DELETE",
-                          });
-                          if (!res.ok) {
-                            const j = await res.json().catch(() => ({}));
-                            throw new Error(j.error || "Delete failed");
+                            return;
+                          try {
+                            const res = await fetch(`/api/matters/${m.id}`, {
+                              method: "DELETE",
+                            });
+                            if (!res.ok) {
+                              const j = await res.json().catch(() => ({}));
+                              throw new Error(j.error || "Delete failed");
+                            }
+                            setMatters((prev) => prev.filter((x) => x.id !== m.id));
+                          } catch (e: any) {
+                            alert(e.message);
                           }
-                          setMatters((prev) => prev.filter((x) => x.id !== m.id));
-                        } catch (e: any) {
-                          alert(e.message);
-                        }
-                      }}
-                      className="rounded-lg border border-rose-500/40 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-950/50"
-                    >
-                      Delete
-                    </button>
+                        }}
+                        className="rounded-lg border border-rose-500/40 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-950/50"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </li>

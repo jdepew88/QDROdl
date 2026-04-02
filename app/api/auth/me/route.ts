@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthCookieName, verifySession } from "@/lib/auth";
+import { isSuperAdminEmail } from "@/lib/dashboardAccess";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
       lastName: null,
       phone: null,
       emailVerified: false,
+      isSuperAdmin: false,
     });
   }
 
@@ -30,6 +32,8 @@ export async function GET(req: NextRequest) {
     },
   });
 
+  const superAdmin = await isSuperAdminEmail(session.email);
+
   return NextResponse.json({
     authenticated: true,
     email: session.email,
@@ -37,6 +41,7 @@ export async function GET(req: NextRequest) {
     lastName: user?.lastName ?? null,
     phone: user?.phone ?? null,
     emailVerified: Boolean(user?.emailVerifiedAt),
+    isSuperAdmin: superAdmin,
   });
 }
 

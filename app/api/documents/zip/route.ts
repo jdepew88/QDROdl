@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import Archiver from "archiver";
 import { DOCUMENTS_DIR } from "@/lib/renderTemplates";
-import { getAuthCookieName, verifySession } from "@/lib/auth";
+import { requireMatterAccess } from "@/lib/matterAccessHttp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,15 +12,13 @@ export const dynamic = "force-dynamic";
  * GET ?matterId= — stream a ZIP of all saved drafts for that matter (repeatable download).
  */
 export async function GET(req: NextRequest) {
-  const token = req.cookies.get(getAuthCookieName())?.value || null;
-  if (!verifySession(token)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const matterId = req.nextUrl.searchParams.get("matterId");
   if (!matterId) {
     return NextResponse.json({ error: "Missing matterId" }, { status: 400 });
   }
+
+  const gate = await requireMatterAccess(req, matterId);
+  if (gate.ok === false) return gate.response;
 
   const dir = path.join(DOCUMENTS_DIR, matterId);
   let names: string[] = [];

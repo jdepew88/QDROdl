@@ -2,22 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { DOCUMENTS_DIR } from "@/lib/renderTemplates";
+import { groupDraftFilesByPlan } from "@/lib/draftInventory";
 import { requireMatterAccess } from "@/lib/matterAccessHttp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const matterId = searchParams.get("matterId");
-  if (!matterId) {
-    return NextResponse.json({ error: "Missing matterId" }, { status: 400 });
-  }
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { matterId: string } },
+) {
+  const gate = await requireMatterAccess(req, params.matterId);
+  if (gate.ok === false) return gate.response;
 
-  const access = await requireMatterAccess(req, matterId);
-  if (access.ok === false) return access.response;
-
+  const matterId = params.matterId;
   const dir = path.join(DOCUMENTS_DIR, matterId);
   let names: string[] = [];
   try {
@@ -32,19 +30,18 @@ export async function GET(req: NextRequest) {
       const stat = await fs.stat(fullPath).catch(() => null);
       return {
         name,
-        url: `/documents/${matterId}/${name}`,
-        updatedAt: stat?.mtime ?? null,
+        url: `/documents/${matterId}/${encodeURIComponent(name)}`,
+        updatedAt: stat?.mtime ? stat.mtime.toISOString() : null,
         size: stat?.size ?? null,
       };
     }),
   );
 
-  files.sort((a, b) => {
-    const at = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-    const bt = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-    return bt - at;
-  });
+  const grouped = groupDraftFilesByPlan(
+    files,
+    gate.matter.plans,
+    gate.matter.petitionerIsMember,
+  );
 
-  return NextResponse.json({ matterId, files });
+  return NextResponse.json(grouped);
 }
-

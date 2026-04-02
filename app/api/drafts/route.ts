@@ -9,6 +9,7 @@ import {
   saveDraftBuffer,
   templateFileExists,
 } from "@/lib/renderTemplates";
+import { requireMatterAccess } from "@/lib/matterAccessHttp";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,9 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
+
+    const gate = await requireMatterAccess(req, String(matterId));
+    if (gate.ok === false) return gate.response;
 
     const missing: string[] = [];
     for (const id of templateIds) {

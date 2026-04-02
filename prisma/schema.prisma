@@ -13,6 +13,8 @@ model User {
   // Stored formatted as (000) 000-0000 after validating 10 digits.
   phone           String?
   emailVerifiedAt DateTime?
+  /// Staff-only: full super-admin dashboard (also allow SUPER_ADMIN_EMAILS env).
+  isSuperAdmin    Boolean                  @default(false)
   createdAt       DateTime                 @default(now())
   updatedAt       DateTime                 @updatedAt
   verification    EmailVerificationToken[]
@@ -58,11 +60,31 @@ model Matter {
   petitionerId           String
   respondentId           String
   petitionerIsMember     Boolean                @default(true)
+  /// Set when intake is submitted and the matter record is created.
+  intakeCompletedAt      DateTime?
+  /// Pipeline: NEW_INTAKE | OPEN | BEYOND_EMAIL | FILING | AWAITING_FINAL_APPROVAL | CLOSED
+  workflowStatus         String                 @default("OPEN")
+  /// Quoted / expected fees (cents). Ledger records actual collection.
+  quotedOrderPrepCents   Int                    @default(0)
+  quotedMailingCents     Int                    @default(0)
+  quotedFilingCents      Int                    @default(0)
+  amountDueCents         Int                    @default(0)
+  splitBill              Boolean                @default(false)
+  petitionerShareCents   Int?
+  respondentShareCents   Int?
+  petitionerPaidAt       DateTime?
+  respondentPaidAt       DateTime?
+  /// Optional plan-admin email for staff communications (e.g. review letter).
+  planAdminEmail         String?
+  notesInternal          String?                @db.Text
   createdAt              DateTime               @default(now())
   updatedAt              DateTime               @updatedAt
   attorneys              AttorneyInfo[]
   altPayeeBeneficiaries  AltPayeeBeneficiary[]
   generatedDocuments     GeneratedDocument[]
+  feeLedgerEntries       FeeLedgerEntry[]
+  uploads                MatterUpload[]
+  communicationLogs      CommunicationLog[]
   petitioner             Party                  @relation("Petitioner", fields: [petitionerId], references: [id])
   respondent             Party                  @relation("Respondent", fields: [respondentId], references: [id])
   plans                  PlanSelection[]
@@ -135,7 +157,56 @@ model PlanSelection {
   // CalPERS Model C: standard (default) vs dro (second template set).
   calpersModelCForm   String?
   chosenTemplates     String
+  /// Staff: whether a joinder pleading is expected for this plan row.
+  joinderRequired     Boolean  @default(false)
   matter              Matter   @relation(fields: [matterId], references: [id])
+}
+
+/// Recorded revenue (actual fees collected), for admin reporting.
+model FeeLedgerEntry {
+  id          String   @id @default(cuid())
+  matterId    String
+  category    String
+  amountCents Int
+  recordedAt  DateTime @default(now())
+  note        String?
+  matter      Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId])
+  @@index([recordedAt])
+  @@index([category])
+}
+
+/// Party / counsel uploads (judgment, statements, etc.).
+model MatterUpload {
+  id               String   @id @default(cuid())
+  matterId         String
+  planKey          String?
+  category         String
+  note             String?  @db.Text
+  fileName         String
+  filePath         String
+  fileUrl          String
+  uploadedByEmail  String
+  createdAt        DateTime @default(now())
+  matter           Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId])
+}
+
+/// Audit trail for staff-sent emails (reminders, draft packages).
+model CommunicationLog {
+  id          String   @id @default(cuid())
+  matterId    String
+  kind        String
+  channel     String   @default("email")
+  targetsJson String   @db.Text
+  subject     String?
+  bodyPreview String?  @db.Text
+  createdAt   DateTime @default(now())
+  matter      Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
+
+  @@index([matterId])
 }
 
 model AttorneyInfo {

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthCookieName, verifySession } from "@/lib/auth";
 import { GENERATED_DOCUMENT_TYPES } from "@/lib/documents/types";
 import {
   getCalpersPlanSelection,
@@ -11,16 +10,13 @@ import { renderHtmlToPdfBuffer } from "@/lib/documents/renderers/renderPdf";
 import { saveGeneratedPdf } from "@/lib/documents/storage/saveGeneratedPdf";
 import { buildPreapprovalLetterHtml } from "@/lib/documents/templates/preapproval-letter";
 import { prisma } from "@/lib/prisma";
+import { requireMatterAccess } from "@/lib/matterAccessHttp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const DOC_TITLE = "CalPERS Preliminary Review Letter (Model A)";
-
-function unauthorized() {
-  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-}
 
 function validateMatterBasics(m: {
   caseNumber: string;
@@ -40,9 +36,6 @@ function validateMatterBasics(m: {
  * Body: { matterId?: string, caseId?: string } — both refer to `Matter.id` (domain "case").
  */
 export async function POST(req: NextRequest) {
-  const token = req.cookies.get(getAuthCookieName())?.value || null;
-  if (!verifySession(token)) return unauthorized();
-
   let body: { matterId?: unknown; caseId?: unknown };
   try {
     body = await req.json();
@@ -66,19 +59,10 @@ export async function POST(req: NextRequest) {
 
   const matterId = matterIdRaw.trim();
 
-  const m = await prisma.matter.findUnique({
-    where: { id: matterId },
-    include: {
-      petitioner: true,
-      respondent: true,
-      plans: true,
-      attorneys: true,
-    },
-  });
+  const gate = await requireMatterAccess(req, matterId);
+  if (gate.ok === false) return gate.response;
 
-  if (!m) {
-    return NextResponse.json({ error: "Matter not found." }, { status: 404 });
-  }
+  const m = gate.matter;
 
   const basicErr = validateMatterBasics(m);
   if (basicErr) {
