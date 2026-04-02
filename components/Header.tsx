@@ -123,9 +123,6 @@ export default function Header() {
 
         {/* Desktop navigation */}
         <nav className="hidden items-center gap-7 md:flex">
-          <a href="/#supported-plans" className="text-base no-underline text-slate-300">
-            Supported plans
-          </a>
           <div ref={plansMenuRef} className="relative inline-block">
             <button
               type="button"
@@ -134,7 +131,7 @@ export default function Header() {
               aria-expanded={showPlansDropdown}
               aria-haspopup="menu"
             >
-              Plans
+              Supported plans
               <svg
                 width="12"
                 height="12"
@@ -158,17 +155,33 @@ export default function Header() {
             </button>
             {showPlansDropdown && (
               <div
-                className="absolute left-0 top-full z-[1001] min-w-[220px] rounded-lg border border-solid border-white border-opacity-10 bg-neutral-900 px-0 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+                className="absolute left-0 top-full z-[1001] max-h-[min(70vh,28rem)] min-w-[240px] overflow-y-auto rounded-lg border border-solid border-white border-opacity-10 bg-neutral-900 px-0 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                 role="menu"
               >
+                <Link
+                  href="/#supported-plans"
+                  className="block px-4 py-2.5 text-sm font-medium no-underline text-lime-300/95 transition-colors hover:bg-white hover:bg-opacity-5"
+                  onClick={() => setShowPlansDropdown(false)}
+                  role="menuitem"
+                >
+                  Plan overview (homepage)
+                </Link>
                 <Link
                   href="/all_plans"
                   className="block px-4 py-2 text-sm no-underline text-slate-400 transition-colors hover:bg-white hover:bg-opacity-5"
                   onClick={() => setShowPlansDropdown(false)}
                   role="menuitem"
                 >
-                  View all plans
+                  Browse all plans
                 </Link>
+                <div
+                  className="my-2 border-t border-white/10"
+                  role="separator"
+                  aria-hidden
+                />
+                <p className="px-4 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                  Plan guides
+                </p>
                 {PLAN_ROUTE_ENTRIES.map((plan) => (
                   <Link
                     key={plan.slug}
@@ -273,10 +286,6 @@ export default function Header() {
             className="relative z-[999] max-h-[min(78dvh,32rem)] overflow-y-auto border-t border-white/10 bg-neutral-950 px-4 py-3 shadow-[0_16px_48px_rgba(0,0,0,0.45)] md:hidden"
           >
             <nav className="flex flex-col gap-0.5 pb-4" aria-label="Mobile">
-              <a href="/#supported-plans" className={mobileLinkClass} onClick={closeMobile}>
-                Supported plans
-              </a>
-
               <div className="border-b border-white/5 py-1">
                 <button
                   type="button"
@@ -284,7 +293,7 @@ export default function Header() {
                   aria-expanded={mobilePlansOpen}
                   onClick={() => setMobilePlansOpen((o) => !o)}
                 >
-                  <span>Plans</span>
+                  <span>Supported plans</span>
                   <svg
                     width="12"
                     height="12"
@@ -303,13 +312,23 @@ export default function Header() {
                 </button>
                 {mobilePlansOpen && (
                   <div className="ml-2 border-l border-white/10 pl-2">
+                    <a
+                      href="/#supported-plans"
+                      className={`${mobileLinkClass} text-sm font-medium text-lime-300/95`}
+                      onClick={closeMobile}
+                    >
+                      Plan overview (homepage)
+                    </a>
                     <Link
                       href="/all_plans"
                       className={`${mobileLinkClass} text-sm text-slate-400`}
                       onClick={closeMobile}
                     >
-                      View all plans
+                      Browse all plans
                     </Link>
+                    <p className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Plan guides
+                    </p>
                     {PLAN_ROUTE_ENTRIES.map((plan) => (
                       <Link
                         key={plan.slug}
