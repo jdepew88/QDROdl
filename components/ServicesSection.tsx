@@ -70,12 +70,6 @@ const services: ServiceCard[] = [
       "Traditional pensions—formula-based monthly benefits, not individual account balances—drafted to plan rules.",
   },
   {
-    slug: "federal",
-    title: "Federal (FERS, CSRS, TSP)",
-    description:
-      "Federal employee retirement divisions including TSP, FERS, and CSRS benefits.",
-  },
-  {
     slug: "joinders",
     title: "Joinders",
     description:

@@ -14,7 +14,6 @@ import MpGuide from "@/components/mp/QDROGuide";
 import JoindersContent from "@/components/joinders/JoindersContent";
 import GenericDcPlanPage from "@/components/plan/GenericDcPlanPage";
 import GenericDbPlanPage from "@/components/plan/GenericDbPlanPage";
-import FederalPlanPage from "@/components/plan/FederalPlanPage";
 import LacersGuide from "@/components/lacers/LacersGuide";
 import CityLa457PlanPage from "@/components/plan/CityLa457PlanPage";
 import FirePolicePensionPlanPage from "@/components/plan/FirePolicePensionPlanPage";
@@ -30,7 +29,6 @@ const PLAN_COMPONENTS: Record<PlanSlug, ComponentType> = {
   mp: MpGuide,
   generic_dc: GenericDcPlanPage,
   generic_db: GenericDbPlanPage,
-  federal: FederalPlanPage,
   joinders: JoindersContent,
 };
 

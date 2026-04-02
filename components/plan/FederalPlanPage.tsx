@@ -1,3 +1,8 @@
+/**
+ * Archived — not linked from the live site (no route in `planRoutes` / `app/plan/[slug]`).
+ * Federal retirement division typically uses a COAP (e.g. TSP) and non-ERISA procedures,
+ * not the QDRO workflow QDROdl provides. Kept in the repo for reference only.
+ */
 "use client";
 
 import Link from "next/link";

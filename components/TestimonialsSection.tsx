@@ -11,10 +11,10 @@ export default function TestimonialsSection() {
     },
     {
       name: "Michael Chen",
-      role: "Federal Employee",
+      role: "County employee",
       image:
         "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
-      text: "Their expertise with federal retirement plans was invaluable. The TSP division was completed without any complications or delays.",
+      text: "Clear intake and a draft that matched what our plan administrator asked for. We filed without chasing vague language.",
     },
     {
       name: "Lisa Rodriguez",

@@ -120,7 +120,7 @@ export default function PlanQuestions() {
 
       {plans.map((p) => {
         const ans = getAns(p);
-        const isDB = ["calpers", "calstrs", "lacera", "mpi_pension", "federal"].includes(
+        const isDB = ["calpers", "calstrs", "lacera", "mpi_pension"].includes(
           p,
         );
 

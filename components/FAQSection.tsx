@@ -36,9 +36,14 @@ const faqs: FaqItem[] = [
       "QDROs can only be modified in limited circumstances. It's crucial to get it right the first time.",
   },
   {
-    question: "Do you handle federal retirement plans?",
+    question: "Do you handle federal government retirement (FERS, CSRS, TSP)?",
     answer:
-      "Yes, we specialize in TSP, FERS, CSRS, and military retirement benefit divisions.",
+      "No. QDROdl focuses on ERISA-style domestic relations orders for the California and related plans we list. Federal civilian and uniformed retirement (FERS, CSRS, TSP) generally is not handled with the same “QDRO” framework: those systems use different statutes and procedures than typical private-sector ERISA plans. For the Thrift Savings Plan, division usually involves a Court Order Acceptable for Processing (COAP)—a distinct document and process from a QDRO—plus separate steps for the federal annuity. If you need federal retirement division, you should work with counsel or a specialist familiar with COAP and OPM/TSP rules.",
+  },
+  {
+    question: "Is there a discount if I need more than one plan order?",
+    answer:
+      "Yes. The first qualifying plan order is $595. Each additional plan order for the same matter is $100 off ($495 each), when you prepare another order through QDROdl for that case. Scope is confirmed at intake before payment.",
   },
 ];
 

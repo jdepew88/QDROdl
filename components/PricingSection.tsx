@@ -3,26 +3,9 @@
 import Link from "next/link";
 import React from "react";
 
-const tiers = [
-  {
-    name: "Standard",
-    price: "$595",
-    blurb: "Our core turnaround for typical filings.",
-    featured: false,
-  },
-  {
-    name: "Expedited",
-    price: "$895",
-    blurb: "Faster queue when you are up against a deadline.",
-    featured: true,
-  },
-  {
-    name: "Rush",
-    price: "$1,295",
-    blurb: "Priority handling for urgent matters.",
-    featured: false,
-  },
-];
+/** First plan order; each additional order in the same matter is $100 off. */
+const QDRO_PREP_FIRST = "$595";
+const QDRO_PREP_ADDITIONAL = "$495";
 
 export default function PricingSection() {
   return (
@@ -37,36 +20,57 @@ export default function PricingSection() {
           <span className="font-medium text-zinc-300">$1,500–$3,000+</span>
         </p>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {tiers.map((tier) => (
-            <div
-              key={tier.name}
-              className={`relative flex flex-col rounded-2xl border p-8 ${
-                tier.featured
-                  ? "border-lime-500/40 bg-lime-950/20 shadow-[0_0_40px_-12px_rgba(132,204,22,0.35)]"
-                  : "border-white/10 bg-white/[0.03]"
-              }`}
-            >
-              {tier.featured && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-lime-400 px-3 py-0.5 text-xs font-semibold text-zinc-950">
-                  Popular
+        <div className="mx-auto mt-12 max-w-xl">
+          <div className="relative rounded-2xl border border-lime-500/35 bg-lime-950/15 p-8 shadow-[0_0_48px_-16px_rgba(132,204,22,0.25)] md:p-10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-lime-400/90">
+              QDRO preparation
+            </p>
+            <p className="mt-2 text-5xl font-bold tracking-tight text-stone-50 md:text-6xl">
+              {QDRO_PREP_FIRST}
+            </p>
+            <p className="mt-2 text-sm font-medium text-lime-200/90">
+              {QDRO_PREP_ADDITIONAL} each additional plan order in the same matter
+              <span className="font-normal text-zinc-400"> ($100 off)</span>
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-zinc-300">
+              One price for plan-aware draft generation through our intake—you
+              download your package when it&apos;s ready.{" "}
+              <strong className="text-stone-200">
+                The platform can produce your drafts in moments
+              </strong>
+              ; we don&apos;t sell fake &quot;speed tiers&quot; because{" "}
+              <strong className="text-stone-200">
+                plan administrators and courts set their own timelines
+              </strong>
+              , and no fee changes how fast they review or file.
+            </p>
+            <ul className="mt-6 space-y-2 text-sm text-zinc-400">
+              <li className="flex gap-2">
+                <span className="text-lime-500" aria-hidden>
+                  ✓
                 </span>
-              )}
-              <h3 className="text-lg font-semibold text-stone-50">{tier.name}</h3>
-              <p className="mt-3 text-4xl font-bold text-stone-50">{tier.price}</p>
-              <p className="mt-3 flex-1 text-sm text-zinc-400">{tier.blurb}</p>
-              <Link
-                href="/intake/plans"
-                className={`mt-8 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-center text-sm font-semibold no-underline transition ${
-                  tier.featured
-                    ? "bg-lime-700 text-white hover:bg-lime-600"
-                    : "border border-white/15 bg-white/5 text-stone-50 hover:bg-white/10"
-                }`}
-              >
-                Start Your QDRO
-              </Link>
-            </div>
-          ))}
+                <span>Guided intake and plan-specific draft output</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-lime-500" aria-hidden>
+                  ✓
+                </span>
+                <span>No hourly billing—this is the prep fee</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-lime-500" aria-hidden>
+                  ✓
+                </span>
+                <span>Filing fees, service, and plan-side processing are separate</span>
+              </li>
+            </ul>
+            <Link
+              href="/intake/plans"
+              className="mt-8 inline-flex w-full items-center justify-center rounded-xl bg-lime-700 px-4 py-3.5 text-center text-sm font-semibold text-white no-underline transition hover:bg-lime-600"
+            >
+              Start Your QDRO
+            </Link>
+          </div>
         </div>
 
         <p className="mt-10 text-center text-sm font-medium text-zinc-300">

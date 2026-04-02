@@ -1,6 +1,9 @@
 /**
  * Canonical plan URLs: /plan/<slug>
  * Use for nav, metadata titles, and the all-plans index.
+ *
+ * Federal plan guide (`components/plan/FederalPlanPage.tsx`) is kept in the repo
+ * but intentionally not listed here—no public route or nav links.
  */
 export type PlanSlug =
   | "calpers"
@@ -13,7 +16,6 @@ export type PlanSlug =
   | "mp"
   | "generic_dc"
   | "generic_db"
-  | "federal"
   | "joinders";
 
 export type PlanRouteEntry = {
@@ -87,12 +89,6 @@ export const PLAN_ROUTE_ENTRIES: PlanRouteEntry[] = [
     documentTitle: "Generic defined benefit (pensions)",
     description:
       "Traditional pension-style plans that pay a monthly benefit from a formula",
-  },
-  {
-    slug: "federal",
-    navLabel: "Federal (FERS, CSRS, TSP)",
-    documentTitle: "Federal retirement",
-    description: "FERS, CSRS, and TSP-related divisions",
   },
   {
     slug: "joinders",

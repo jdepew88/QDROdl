@@ -9,7 +9,7 @@ const steps = [
   {
     n: "2",
     title: "We generate your order",
-    body: "Drafts use plan-specific language and rules—not a one-size-fits-all template.",
+    body: "The site builds plan-specific drafts from your answers—often in moments. Plan review and court filing still move on their own schedules.",
   },
   {
     n: "3",
