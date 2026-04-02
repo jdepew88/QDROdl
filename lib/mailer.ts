@@ -13,8 +13,7 @@ function smtpConfigured() {
     process.env.SMTP_HOST &&
       process.env.SMTP_PORT &&
       process.env.SMTP_USER &&
-      process.env.SMTP_PASS &&
-      process.env.MAIL_FROM,
+      process.env.SMTP_PASS,
   );
 }
 
@@ -35,8 +34,13 @@ export async function sendVerificationEmail(opts: { to: string; token: string })
 
   const verifyUrl = `${getAppUrl()}/verify-email?token=${encodeURIComponent(opts.token)}`;
 
+  const fromForSending = process.env.SMTP_USER;
+  const replyTo = process.env.MAIL_FROM;
+
   await transporter.sendMail({
-    from: process.env.MAIL_FROM,
+    // Some SMTP providers reject "From" values that aren't exactly the authenticated sender.
+    // Using SMTP_USER for `from` avoids relay/send failures (e.g. 553 not allowed to relay).
+    from: fromForSending,
     to: opts.to,
     subject: "Thanks for registering - verify your email",
     text: `Thanks for registering with QDROdl.\n\nPlease verify your email by clicking this link:\n${verifyUrl}\n\nIf you did not request this, you can ignore this email.`,
@@ -46,6 +50,7 @@ export async function sendVerificationEmail(opts: { to: string; token: string })
       <p><a href="${verifyUrl}">Verify email address</a></p>
       <p>If you did not request this, you can ignore this email.</p>
     `,
+    ...(replyTo ? { replyTo } : {}),
   });
 
   return { sent: true as const };
@@ -66,6 +71,9 @@ export async function sendStaffNotificationEmail(opts: {
     return { sent: false, reason: "SMTP not configured" };
   }
 
+  const fromForSending = process.env.SMTP_USER;
+  const replyTo = process.env.MAIL_FROM;
+
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT),
@@ -79,12 +87,14 @@ export async function sendStaffNotificationEmail(opts: {
   const ccList = (opts.cc || []).map((e) => e.trim()).filter(Boolean);
 
   await transporter.sendMail({
-    from: process.env.MAIL_FROM,
+    // Use SMTP_USER as the actual authenticated sender to avoid "not allowed to relay".
+    from: fromForSending,
     to: recipients.join(", "),
     ...(ccList.length ? { cc: ccList.join(", ") } : {}),
     subject: opts.subject,
     text: opts.text,
     html: opts.html ?? opts.text.replace(/\n/g, "<br/>"),
+    ...(replyTo ? { replyTo } : {}),
   });
 
   return { sent: true };
