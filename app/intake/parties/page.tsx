@@ -155,14 +155,6 @@ function PartyForm({ which }: { which: "petitioner" | "respondent" }) {
           checked={!!party.selfRepresented}
           onChange={(e) => {
             const checked = e.target.checked;
-            if (
-              checked &&
-              !confirm(
-                "Mark this party as in pro per and remove their attorney from this matter?",
-              )
-            ) {
-              return;
-            }
             update("selfRepresented", checked);
             if (checked) {
               const at = { ...attorneys };
