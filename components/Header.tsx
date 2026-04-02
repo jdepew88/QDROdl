@@ -211,7 +211,7 @@ export default function Header() {
           <Link
             href={
               authChecked && isAuthenticated
-                ? "/dash/process"
+                ? "/process"
                 : "/register?next=%2Fintake%2Fplans"
             }
             className="rounded-lg border-none bg-neutral-200 px-6 py-3 text-base font-[510] no-underline text-zinc-950"
@@ -366,7 +366,7 @@ export default function Header() {
                 <Link
                   href={
                     authChecked && isAuthenticated
-                      ? "/dash/process"
+                      ? "/process"
                       : "/register?next=%2Fintake%2Fplans"
                   }
                   className="block rounded-xl bg-neutral-200 px-4 py-3 text-center text-base font-semibold text-zinc-950 no-underline"

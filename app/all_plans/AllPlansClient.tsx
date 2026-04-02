@@ -33,7 +33,7 @@ export default function AllPlansClient() {
               Begin intake — select plans
             </Link>
             <Link
-              href="/dash/process"
+              href="/process"
               className="text-sm font-medium text-zinc-400 underline-offset-4 transition hover:text-lime-300 hover:underline"
             >
               View process overview
