@@ -159,6 +159,14 @@ model PlanSelection {
   chosenTemplates     String
   /// Staff: whether a joinder pleading is expected for this plan row.
   joinderRequired     Boolean  @default(false)
+  /// Who is the plan "member" (employee/participant) for this specific plan order.
+  /// "PETITIONER" means Husband/Petitioner is the plan member; "RESPONDENT" means
+  /// Wife/Respondent is the plan member.
+  memberPartyRole     String?
+  /// Member spouse's employer name for this specific plan order.
+  memberEmployerName  String?
+  /// Whether the plan has already been joined on the case (joinder filed).
+  joinderJoinedInCase Boolean @default(false)
   matter              Matter   @relation(fields: [matterId], references: [id])
 }
 

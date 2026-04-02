@@ -8,6 +8,7 @@ import { isLikelyValidEmail } from "@/lib/emailValidation";
 import { formatUsPhoneInput } from "@/lib/phoneUs";
 import { tryParseLegacyCityStateZip } from "@/lib/partyAddressLines";
 import { isValidUsPostalCode } from "@/lib/postalCodeUs";
+import { planLabelForKey } from "@/lib/planDisplay";
 
 const COUNTIES: County[] = [
   "Los Angeles",
@@ -132,6 +133,19 @@ export default function EditMatterPage({
               address1: b.address1 || "",
               address2: b.address2 || "",
             })) || [],
+          plans:
+            m.plans?.map((p: any) => {
+              const fallbackRole =
+                m.petitionerIsMember ? "PETITIONER" : "RESPONDENT";
+              return {
+                id: p.id,
+                planKey: p.planKey,
+                memberPartyRole: p.memberPartyRole ?? fallbackRole,
+                memberEmployerName: p.memberEmployerName ?? "",
+                joinderRequired: Boolean(p.joinderRequired),
+                joinderJoinedInCase: Boolean(p.joinderJoinedInCase),
+              };
+            }) || [],
         });
       } catch (e: any) {
         if (!c) setError(e.message);
@@ -188,6 +202,13 @@ export default function EditMatterPage({
           altpayeeBeneficiaries: form.beneficiaries.filter(
             (b: any) => (b.fullName || "").trim(),
           ),
+          planSelectionUpdates: (form.plans || []).map((p: any) => ({
+            id: p.id,
+            memberPartyRole: p.memberPartyRole,
+            memberEmployerName: p.memberEmployerName,
+            joinderRequired: Boolean(p.joinderRequired),
+            joinderJoinedInCase: Boolean(p.joinderJoinedInCase),
+          })),
         }),
       });
       const j = await res.json();
@@ -231,6 +252,15 @@ export default function EditMatterPage({
     const n = Number(t);
     if (!Number.isFinite(n)) return null;
     return Math.round(n * 100);
+  };
+
+  const patchPlan = (planId: string, patch: Record<string, unknown>) => {
+    setForm({
+      ...form,
+      plans: (form.plans || []).map((p: any) =>
+        p.id === planId ? { ...p, ...patch } : p,
+      ),
+    });
   };
 
   return (
@@ -381,6 +411,111 @@ export default function EditMatterPage({
         <p className="text-xs text-zinc-500">
           For special circumstances (example: 80/20 splits), contact support via email or a support ticket so staff can
           confirm the exact split. For now, this captures the split amounts so we can prepare the draft package workflow later.
+        </p>
+      </section>
+
+      <section className="mb-10 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <h2 className="font-semibold text-stone-100">Plan information (questionnaire skeleton)</h2>
+        <p className="text-sm text-zinc-400">
+          For each selected plan order, capture which spouse is the plan member,
+          the member&apos;s employer, and whether joinder is required + already completed in the case.
+        </p>
+
+        {(form.plans || []).length === 0 && (
+          <p className="text-sm text-zinc-500">No plans found for this matter.</p>
+        )}
+
+        {(form.plans || []).map((p: any, idx: number) => (
+          <div
+            key={p.id}
+            className="rounded-2xl border border-white/10 bg-white/5 p-5"
+          >
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-base font-semibold text-stone-50">
+                {planLabelForKey(p.planKey)} — Order {idx + 1}
+              </h3>
+              {p.joinderRequired && (
+                <span className="rounded-full border border-amber-500/40 bg-amber-950/40 px-3 py-1 text-xs font-medium text-amber-100">
+                  Joinder typically required
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-xl border border-white/10 bg-zinc-950/20 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  Member side for this plan
+                </p>
+                <div className="mt-3 flex flex-wrap gap-4">
+                  <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
+                    <input
+                      type="radio"
+                      name={`member-${p.id}`}
+                      checked={p.memberPartyRole === "PETITIONER"}
+                      onChange={() =>
+                        patchPlan(p.id, { memberPartyRole: "PETITIONER" })
+                      }
+                    />
+                    Husband (Petitioner)
+                  </label>
+                  <label className="inline-flex items-center gap-2 text-sm text-zinc-300">
+                    <input
+                      type="radio"
+                      name={`member-${p.id}`}
+                      checked={p.memberPartyRole === "RESPONDENT"}
+                      onChange={() =>
+                        patchPlan(p.id, { memberPartyRole: "RESPONDENT" })
+                      }
+                    />
+                    Wife (Respondent)
+                  </label>
+                </div>
+              </div>
+
+              <label className="block text-sm text-zinc-400">
+                Employer for the plan member
+                <input
+                  className="mt-2 w-full rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
+                  value={p.memberEmployerName || ""}
+                  onChange={(e) =>
+                    patchPlan(p.id, { memberEmployerName: e.target.value })
+                  }
+                  placeholder="e.g. Los Angeles County / State employer / School District"
+                />
+              </label>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(p.joinderRequired)}
+                    onChange={(e) =>
+                      patchPlan(p.id, { joinderRequired: e.target.checked })
+                    }
+                    className="accent-lime-600"
+                  />
+                  This plan requires joinder
+                </label>
+
+                <label className="flex items-center gap-2 text-sm text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(p.joinderJoinedInCase)}
+                    onChange={(e) =>
+                      patchPlan(p.id, { joinderJoinedInCase: e.target.checked })
+                    }
+                    className="accent-lime-600"
+                  />
+                  Joinder already filed/joined in this case
+                </label>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <p className="text-xs text-zinc-500">
+          This is a skeleton questionnaire. Next iteration will use these flags to compute
+          joinder/order counts, generate the invoice summary, and gate “Generate drafts” until payment.
         </p>
       </section>
 

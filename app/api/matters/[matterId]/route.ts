@@ -402,6 +402,75 @@ export async function PATCH(
           });
         }
       }
+
+      // Plan questionnaire "bones" (member side, member employer, joinder status).
+      if (Array.isArray(body.planSelectionUpdates)) {
+        for (const row of body.planSelectionUpdates as {
+          id?: string;
+          memberPartyRole?: string;
+          memberEmployerName?: string;
+          joinderRequired?: boolean;
+          joinderJoinedInCase?: boolean;
+        }[]) {
+          if (!row?.id || typeof row.id !== "string") continue;
+
+          const memberPartyRole =
+            row.memberPartyRole === "PETITIONER" || row.memberPartyRole === "RESPONDENT"
+              ? row.memberPartyRole
+              : null;
+          const employer =
+            typeof row.memberEmployerName === "string"
+              ? row.memberEmployerName.trim() || null
+              : null;
+
+          const data: any = {
+            memberPartyRole,
+            memberEmployerName: employer,
+          };
+
+          if (row.joinderRequired !== undefined) {
+            data.joinderRequired = Boolean(row.joinderRequired);
+          }
+          if (row.joinderJoinedInCase !== undefined) {
+            data.joinderJoinedInCase = Boolean(row.joinderJoinedInCase);
+          }
+
+          await tx.planSelection.updateMany({
+            where: { id: row.id, matterId },
+            data,
+          });
+        }
+      }
+
+      // Quote the base order prep costs using the selected number of plan orders.
+      // Pricing skeleton only (no joinder add-on cost yet).
+      if (Array.isArray(body.planSelectionUpdates)) {
+        const planCount = await tx.planSelection.count({ where: { matterId } });
+        const orderPrep = 59500 + Math.max(0, planCount - 1) * 49500;
+
+        // If parties are entering split payment shares, `amountDueCents`
+        // is already computed earlier in this PATCH handler. Don't override it.
+        // Note: the PATCH handler always receives `splitBill`, so check the *value*.
+        const partiesSettingShares =
+          body.splitBill === true ||
+          body.petitionerShareCents != null ||
+          body.respondentShareCents != null;
+
+        const mailingAndFiling =
+          (m.quotedMailingCents || 0) + (m.quotedFilingCents || 0);
+
+        const matterData: Record<string, unknown> = {
+          quotedOrderPrepCents: orderPrep,
+        };
+
+        if (!partiesSettingShares) {
+          matterData.amountDueCents = orderPrep + mailingAndFiling;
+        }
+        await tx.matter.update({
+          where: { id: matterId },
+          data: matterData as any,
+        });
+      }
     });
 
     return NextResponse.json({ ok: true });
