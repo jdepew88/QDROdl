@@ -123,8 +123,8 @@ export default function Header() {
 
         {/* Desktop navigation */}
         <nav className="hidden items-center gap-7 md:flex">
-          <a href="/#services" className="text-base no-underline text-slate-300">
-            Services
+          <a href="/#supported-plans" className="text-base no-underline text-slate-300">
+            Supported plans
           </a>
           <div ref={plansMenuRef} className="relative inline-block">
             <button
@@ -273,8 +273,8 @@ export default function Header() {
             className="relative z-[999] max-h-[min(78dvh,32rem)] overflow-y-auto border-t border-white/10 bg-neutral-950 px-4 py-3 shadow-[0_16px_48px_rgba(0,0,0,0.45)] md:hidden"
           >
             <nav className="flex flex-col gap-0.5 pb-4" aria-label="Mobile">
-              <a href="/#services" className={mobileLinkClass} onClick={closeMobile}>
-                Services
+              <a href="/#supported-plans" className={mobileLinkClass} onClick={closeMobile}>
+                Supported plans
               </a>
 
               <div className="border-b border-white/5 py-1">

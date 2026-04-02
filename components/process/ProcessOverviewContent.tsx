@@ -98,6 +98,49 @@ export default function ProcessOverviewContent() {
         </div>
       </section>
 
+      <section
+        className="mt-10 rounded-2xl border border-white/10 bg-zinc-950/50 p-6 md:p-8"
+        aria-labelledby="joinders-process-heading"
+      >
+        <h2
+          id="joinders-process-heading"
+          className="text-lg font-semibold text-stone-50"
+        >
+          Joinders — only when the plan requires them
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+          Some retirement systems require a{" "}
+          <strong className="text-stone-200">joinder</strong> so the plan is
+          formally joined to your dissolution case before they will review or
+          accept a domestic relations order.{" "}
+          <strong className="text-stone-200">
+            We do not sell joinders as a routine upsell
+          </strong>
+          : if your plan does not require one, we focus on the QDRO/DRO package
+          only.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+          When a joinder is required, we can prepare it as part of your matter.
+          You will see where that applies in intake and in follow-up messaging;
+          pricing and filing steps are confirmed for your specific plan and
+          county. For more detail, see the{" "}
+          <a
+            href="/#faq"
+            className="font-medium text-lime-400 underline-offset-2 hover:underline"
+          >
+            FAQ on the homepage
+          </a>{" "}
+          (joinder questions) and the{" "}
+          <Link
+            href="/plan/joinders"
+            className="font-medium text-lime-400 underline-offset-2 hover:underline"
+          >
+            joinders guide
+          </Link>{" "}
+          for which types of plans typically require joinder.
+        </p>
+      </section>
+
       <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
         <Link
           href="/intake/plans"

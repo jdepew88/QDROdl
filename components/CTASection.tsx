@@ -3,30 +3,28 @@ import Link from "next/link";
 
 export default function CTASection() {
   return (
-    <section className="py-24 text-center">
-      <div className="mx-auto my-0 max-w-screen-lg px-6 py-0">
-        <h2 className="mb-6 max-sm:text-4xl text-6xl font-[538] leading-none text-stone-50">
-          Protect Your Retirement Future <br />
-          in Minutes
+    <section className="border-t border-white/10 py-20 text-center md:py-24">
+      <div className="mx-auto max-w-screen-lg px-6">
+        <h2 className="text-3xl font-bold tracking-tight text-stone-50 md:text-4xl">
+          Get your QDRO done—without the delays
         </h2>
-        <p className="mx-auto mb-12 mt-0 max-w-[600px] text-xl text-slate-300 max-sm:text-lg">
-          Don&apos;t let the legalese get in your way. Download your QDRO today.
-          Learn, answer questions, and download your QDRO in minutes. At the end
-          of the process you&apos;ll be a QDRO expert.
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-zinc-400">
+          Guided questions, plan-aware drafts, and downloads you can file on your
+          schedule.
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
+        <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Link
             href="/intake/plans"
-            className="rounded-lg border-none bg-green-400 px-8 py-4 text-lg font-[510] text-zinc-950 no-underline"
+            className="inline-flex rounded-xl bg-lime-800 px-8 py-4 text-base font-semibold text-stone-50 no-underline shadow-lg shadow-lime-950/30 transition hover:bg-lime-700"
           >
-            Start Your QDRO Now
+            Start Your QDRO
           </Link>
-          <a
-            href="#services"
-            className="rounded-lg border border-solid border-white border-opacity-10 bg-zinc-800 px-8 py-4 text-lg font-[510] text-stone-50 no-underline"
+          <Link
+            href="/all_plans"
+            className="inline-flex rounded-xl border border-white/15 bg-white/5 px-8 py-4 text-base font-semibold text-stone-50 no-underline transition hover:bg-white/10"
           >
-            Learn more about preparing a QDRO
-          </a>
+            See supported plans
+          </Link>
         </div>
       </div>
     </section>

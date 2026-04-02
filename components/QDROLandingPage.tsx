@@ -1,12 +1,15 @@
 "use client";
+
 import React from "react";
 import HeroSection from "./HeroSection";
-import WhatIsQDROSection from "./WhatIsQDROSection";
-import ServicesSection from "./ServicesSection";
+import ProblemSolutionSection from "./home/ProblemSolutionSection";
+import HowItWorksHomeSection from "./home/HowItWorksHomeSection";
+import SupportedPlansHomeSection from "./home/SupportedPlansHomeSection";
 import PricingSection from "./PricingSection";
+import TrustCredibilitySection from "./home/TrustCredibilitySection";
+import WhoItsForSection from "./home/WhoItsForSection";
 import TestimonialsSection from "./TestimonialsSection";
 import FAQSection from "./FAQSection";
-import DownloadsSection from "./DownloadsSection";
 import CTASection from "./CTASection";
 
 export default function QDROLandingPage() {
@@ -14,12 +17,14 @@ export default function QDROLandingPage() {
     <div className="min-h-screen bg-zinc-950">
       <main>
         <HeroSection />
-        <WhatIsQDROSection />
-        <ServicesSection />
+        <ProblemSolutionSection />
+        <HowItWorksHomeSection />
+        <SupportedPlansHomeSection />
         <PricingSection />
+        <TrustCredibilitySection />
+        <WhoItsForSection />
         <TestimonialsSection />
         <FAQSection />
-        <DownloadsSection />
         <CTASection />
       </main>
     </div>

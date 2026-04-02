@@ -21,7 +21,7 @@ export default function TestimonialsSection() {
       role: "Attorney",
       image:
         "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
-      text: "I recommend QDRO Pro to all my divorce clients. Their documents are always court-ready and plan administrator approved.",
+      text: "I recommend QDROdl to divorce clients who need plan-aware drafts. The documents are structured for court filing and plan review.",
     },
   ];
 

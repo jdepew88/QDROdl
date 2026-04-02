@@ -1,111 +1,98 @@
 "use client";
-import React, { useState } from "react";
+
+import Link from "next/link";
+import React from "react";
+
+const tiers = [
+  {
+    name: "Standard",
+    price: "$595",
+    blurb: "Our core turnaround for typical filings.",
+    featured: false,
+  },
+  {
+    name: "Expedited",
+    price: "$895",
+    blurb: "Faster queue when you are up against a deadline.",
+    featured: true,
+  },
+  {
+    name: "Rush",
+    price: "$1,295",
+    blurb: "Priority handling for urgent matters.",
+    featured: false,
+  },
+];
 
 export default function PricingSection() {
-  const [selectedPlan, setSelectedPlan] = useState(null);
-
-  const plans = [
-    {
-      name: "QDRO/DRO Services",
-      price: "$600",
-      description: "Professional qualified domestic relations orders",
-      features: [
-        "First QDRO: $600",
-        "Additional QDROs: $500 each",
-        "All retirement plan types",
-        "Court filing assistance",
-        "Plan administrator review",
-        "Filing fees extra (TBD)",
-        "Most cases use e-signatures & e-filing",
-        "Only filing fees typically apply",
-      ],
-      popular: true,
-    },
-    {
-      name: "Joinder Services",
-      price: "$375",
-      description: "Required only when mandated by Plan Administrator",
-      features: [
-        "Joinder preparation: $375",
-        "Only when required by Plan Admin",
-        "Complements QDRO process",
-        "Professional document preparation",
-        "Filing fees extra (TBD)",
-        "Mailing fees extra (when applicable)",
-        "E-filing preferred when available",
-        "Streamlined process",
-      ],
-    },
-  ];
-
-  function selectPlan(planName) {
-    setSelectedPlan(planName);
-  }
-
   return (
-    <section id="pricing" className="py-24 bg-stone-950">
-      <div className="px-6 py-0 mx-auto my-0 max-w-screen-lg">
-        <div className="mb-16 text-center">
-          <h2 className="mb-6 text-6xl leading-none font-[538] text-stone-50 max-sm:text-4xl">
-            Transparent Pricing
-          </h2>
-          <p className="mx-auto my-0 text-xl max-w-[600px] text-slate-300 max-sm:text-lg">
-            Professional QDRO preparation at competitive rates
-          </p>
-        </div>
-        <div className="grid gap-8 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
-          {plans.map((plan, index) => (
+    <section id="pricing" className="border-t border-white/10 bg-stone-950 py-20 md:py-24">
+      <div className="mx-auto max-w-screen-lg px-6">
+        <h2 className="text-center text-3xl font-bold tracking-tight text-stone-50 md:text-4xl">
+          Transparent pricing
+        </h2>
+
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-zinc-400">
+          <span className="text-zinc-500">Traditional attorney-drafted QDROs: </span>
+          <span className="font-medium text-zinc-300">$1,500–$3,000+</span>
+        </p>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {tiers.map((tier) => (
             <div
-              key={index}
-              className="relative p-8 rounded-lg transition-transform duration-[0.3s] ease-[ease]"
-              style={{
-                backgroundColor: plan.popular
-                  ? "rgb(25, 26, 27)"
-                  : "rgb(20, 21, 22)",
-                borderTop: plan.popular
-                  ? "2px solid rgb(104, 204, 88)"
-                  : "1px solid rgba(255, 255, 255, 0.05)",
-              }}
+              key={tier.name}
+              className={`relative flex flex-col rounded-2xl border p-8 ${
+                tier.featured
+                  ? "border-lime-500/40 bg-lime-950/20 shadow-[0_0_40px_-12px_rgba(132,204,22,0.35)]"
+                  : "border-white/10 bg-white/[0.03]"
+              }`}
             >
-              {plan.popular && (
-                <div className="absolute -top-3 left-2/4 px-4 py-1 text-sm bg-green-400 rounded-2xl -translate-x-2/4 font-[538] text-zinc-950">
-                  Most Popular
-                </div>
+              {tier.featured && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-lime-400 px-3 py-0.5 text-xs font-semibold text-zinc-950">
+                  Popular
+                </span>
               )}
-              <h3 className="mb-2 text-2xl font-[538] text-stone-50">
-                {plan.name}
-              </h3>
-              <div className="mb-2 text-4xl font-[538] text-stone-50">
-                {plan.price}
-              </div>
-              <p className="mb-6 text-base text-neutral-400">
-                {plan.description}
-              </p>
-              <ul className="p-0 mb-8">
-                {plan.features.map((feature, featureIndex) => (
-                  <li
-                    key={featureIndex}
-                    className="relative pl-5 mb-3 text-base text-slate-300 before:content-['✓'] before:absolute before:left-0 before:text-green-400"
-                  >
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <button
-                className="p-4 w-full text-base rounded-lg transition-opacity cursor-pointer border-[none] duration-[0.3s] ease-[ease] font-[510]"
-                onClick={() => selectPlan(plan.name)}
-                style={{
-                  backgroundColor: plan.popular
-                    ? "rgb(104, 204, 88)"
-                    : "rgb(230, 230, 230)",
-                  color: plan.popular ? "rgb(8, 9, 10)" : "rgb(8, 9, 10)",
-                }}
+              <h3 className="text-lg font-semibold text-stone-50">{tier.name}</h3>
+              <p className="mt-3 text-4xl font-bold text-stone-50">{tier.price}</p>
+              <p className="mt-3 flex-1 text-sm text-zinc-400">{tier.blurb}</p>
+              <Link
+                href="/intake/plans"
+                className={`mt-8 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-center text-sm font-semibold no-underline transition ${
+                  tier.featured
+                    ? "bg-lime-700 text-white hover:bg-lime-600"
+                    : "border border-white/15 bg-white/5 text-stone-50 hover:bg-white/10"
+                }`}
               >
-                Choose Plan
-              </button>
+                Start Your QDRO
+              </Link>
             </div>
           ))}
         </div>
+
+        <p className="mt-10 text-center text-sm font-medium text-zinc-300">
+          No hourly billing. No hidden fees.
+        </p>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-xs leading-relaxed text-zinc-500">
+          <span className="font-semibold text-zinc-400">Joinders: </span>
+          We provide joinder preparation{" "}
+          <strong className="text-zinc-400">only when required</strong> by your
+          plan administrator or court procedure—not as a default add-on. Where
+          that fits in your matter, timing, and pricing are covered in the{" "}
+          <Link
+            href="/get-started"
+            className="text-lime-400/90 underline-offset-2 hover:underline"
+          >
+            QDRO prep process
+          </Link>{" "}
+          and in the{" "}
+          <a href="#faq" className="text-lime-400/90 underline-offset-2 hover:underline">
+            FAQ
+          </a>
+          .
+        </p>
+        <p className="mx-auto mt-2 max-w-xl text-center text-xs text-zinc-500">
+          Extra plans or special scope are confirmed at intake before you pay.
+        </p>
       </div>
     </section>
   );
