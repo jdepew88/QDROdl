@@ -59,6 +59,9 @@ model Matter {
   concurrentWithJudgment Boolean                @default(false)
   petitionerId           String
   respondentId           String
+  /// The login email that created/submitted this intake (used to show matters in the dashboard
+  /// even if petitioner/respondent emails differ).
+  createdByEmail         String?
   petitionerIsMember     Boolean                @default(true)
   /// Set when intake is submitted and the matter record is created.
   intakeCompletedAt      DateTime?
@@ -88,6 +91,8 @@ model Matter {
   petitioner             Party                  @relation("Petitioner", fields: [petitionerId], references: [id])
   respondent             Party                  @relation("Respondent", fields: [respondentId], references: [id])
   plans                  PlanSelection[]
+
+  @@index([createdByEmail])
 }
 
 /// Server-generated lifecycle PDFs / exports (preapproval letter, notices, etc.). Source of truth remains Matter / Party rows.

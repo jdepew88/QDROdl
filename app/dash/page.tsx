@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import DroPlanPicker from "@/components/intake/DroPlanPicker";
+import { planLabelForKey } from "@/lib/planDisplay";
 
 type MatterListItem = {
   id: string;
@@ -12,6 +13,12 @@ type MatterListItem = {
   petitionerName: string;
   respondentName: string;
   planKeys: string[];
+  plans?: {
+    id: string;
+    planKey: string;
+    memberPartyRole: "PETITIONER" | "RESPONDENT";
+    joinderRequired: boolean;
+  }[];
 };
 
 export default function DashboardPage() {
@@ -61,6 +68,32 @@ export default function DashboardPage() {
     error,
     matters.length,
   ]);
+
+  const mattersByPlan = useMemo(() => {
+    const map = new Map<string, MatterListItem[]>();
+    for (const m of matters) {
+      const keys = (m.planKeys || []).filter(Boolean);
+      const bucket = keys.length ? keys : ["unknown"];
+      for (const k of bucket) {
+        if (!map.has(k)) map.set(k, []);
+        map.get(k)!.push(m);
+      }
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [matters]);
+
+  const courtCode = (county: string) => {
+    const c = String(county || "").toLowerCase();
+    if (c.includes("los angeles")) return "LASC";
+    if (c.includes("orange")) return "OCSC";
+    if (c.includes("san bernardino")) return "SBSC";
+    if (c.includes("ventura")) return "VCSC";
+    if (c.includes("san diego")) return "SDSC";
+    return "CSC";
+  };
+
+  const memberLabel = (role: "PETITIONER" | "RESPONDENT") =>
+    role === "PETITIONER" ? "Husband (Petitioner)" : "Wife (Respondent)";
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 lg:px-10 lg:py-10">
@@ -167,86 +200,96 @@ export default function DashboardPage() {
       )}
 
       {!loading && !error && matters.length > 0 && (
-        <section className="mt-10 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
-            <h2 className="text-sm font-semibold tracking-wide text-zinc-200">
-              RECENT MATTERS
-            </h2>
-            <div className="text-xs text-zinc-400">
-              Showing {matters.length} • newest first
+        <section className="mt-10 space-y-4">
+          {mattersByPlan.map(([planKey, items]) => (
+            <div
+              key={planKey}
+              className="overflow-hidden rounded-2xl border border-white/10 bg-white/5"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-6 py-4">
+                <h2 className="text-sm font-semibold tracking-wide text-zinc-200">
+                  {planKey === "unknown"
+                    ? "PLAN (UNKNOWN)"
+                    : planLabelForKey(planKey)}
+                </h2>
+                <div className="text-xs text-zinc-400">{items.length} matter(s)</div>
+              </div>
+              <ul className="divide-y divide-white/10">
+                {items.map((m) => (
+                  <li key={`${planKey}-${m.id}`} className="px-6 py-5">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-zinc-400">
+                          {courtCode(m.county)} • Case {m.caseNumber}
+                        </div>
+                        <div className="mt-1 truncate text-base font-semibold text-stone-50">
+                          {m.petitionerName} v. {m.respondentName}
+                        </div>
+                        {planKey !== "unknown" && (
+                          <div className="mt-2 text-sm text-zinc-300">
+                            <span className="text-zinc-400">Member/Participant:</span>{" "}
+                            {(() => {
+                              const row = (m.plans || []).find(
+                                (p) => p.planKey === planKey,
+                              );
+                              return row
+                                ? memberLabel(row.memberPartyRole)
+                                : "—";
+                            })()}
+                          </div>
+                        )}
+                        <div className="mt-2 text-xs text-zinc-400">
+                          Created: {new Date(m.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <Link
+                          href={`/dash/matter/${m.id}`}
+                          className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-100 hover:bg-white/10"
+                        >
+                          Open
+                        </Link>
+                        <Link
+                          href={`/dash/matter/${m.id}/edit`}
+                          className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-100 hover:bg-white/10"
+                        >
+                          Edit info
+                        </Link>
+                        {isSuperAdmin && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (
+                                !confirm(
+                                  `Staff delete: matter ${m.caseNumber}? This cannot be undone.`,
+                                )
+                              )
+                                return;
+                              try {
+                                const res = await fetch(`/api/matters/${m.id}`, {
+                                  method: "DELETE",
+                                });
+                                if (!res.ok) {
+                                  const j = await res.json().catch(() => ({}));
+                                  throw new Error(j.error || "Delete failed");
+                                }
+                                setMatters((prev) => prev.filter((x) => x.id !== m.id));
+                              } catch (e: any) {
+                                alert(e.message);
+                              }
+                            }}
+                            className="rounded-lg border border-rose-500/40 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-950/50"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-          <ul className="divide-y divide-white/10">
-            {matters.map((m) => (
-              <li key={m.id} className="px-6 py-5">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-zinc-400">
-                      Case {m.caseNumber} • {m.county}
-                    </div>
-                    <div className="mt-1 truncate text-base font-semibold text-stone-50">
-                      {m.petitionerName} v. {m.respondentName}
-                    </div>
-                    <div className="mt-2 text-sm text-zinc-300">
-                      <span className="text-zinc-400">Plans:</span>{" "}
-                      {m.planKeys.length ? m.planKeys.join(", ") : "—"}
-                    </div>
-                    <div className="mt-2 text-xs text-zinc-400">
-                      Created: {new Date(m.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <Link
-                      href={`/dash/matter/${m.id}`}
-                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-100 hover:bg-white/10"
-                    >
-                      Documents
-                    </Link>
-                    <Link
-                      href={`/dash/matter/${m.id}/edit`}
-                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-zinc-100 hover:bg-white/10"
-                    >
-                      Edit case / parties
-                    </Link>
-                    <Link
-                      href="/intake/review"
-                      className="rounded-lg bg-lime-800 px-3 py-2 text-sm font-semibold text-stone-50 hover:bg-lime-700"
-                    >
-                      New drafts
-                    </Link>
-                    {isSuperAdmin && (
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (
-                            !confirm(
-                              `Staff delete: matter ${m.caseNumber}? This cannot be undone.`,
-                            )
-                          )
-                            return;
-                          try {
-                            const res = await fetch(`/api/matters/${m.id}`, {
-                              method: "DELETE",
-                            });
-                            if (!res.ok) {
-                              const j = await res.json().catch(() => ({}));
-                              throw new Error(j.error || "Delete failed");
-                            }
-                            setMatters((prev) => prev.filter((x) => x.id !== m.id));
-                          } catch (e: any) {
-                            alert(e.message);
-                          }
-                        }}
-                        className="rounded-lg border border-rose-500/40 px-3 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-950/50"
-                      >
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+          ))}
         </section>
       )}
     </main>

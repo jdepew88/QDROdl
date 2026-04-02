@@ -26,6 +26,22 @@ export async function GET(req: NextRequest) {
   try {
     const admin = await isSuperAdminEmail(email);
 
+    // Backfill/link older matters on first dashboard load:
+    // if a matter matches this user's party email and has no creator link yet,
+    // attach it so future filters are stable.
+    if (!admin) {
+      await prisma.matter.updateMany({
+        where: {
+          createdByEmail: null,
+          OR: [
+            { petitioner: { email: { equals: email, mode: "insensitive" } } },
+            { respondent: { email: { equals: email, mode: "insensitive" } } },
+          ],
+        },
+        data: { createdByEmail: email },
+      });
+    }
+
     const matters = await prisma.matter.findMany({
       where: admin
         ? undefined
@@ -33,6 +49,7 @@ export async function GET(req: NextRequest) {
             OR: [
               { petitioner: { email: { equals: email, mode: "insensitive" } } },
               { respondent: { email: { equals: email, mode: "insensitive" } } },
+              { createdByEmail: { equals: email, mode: "insensitive" } },
             ],
           },
       orderBy: { createdAt: "desc" },
@@ -57,6 +74,14 @@ export async function GET(req: NextRequest) {
         petitionerName: `${m.petitioner.firstName} ${m.petitioner.lastName}`,
         respondentName: `${m.respondent.firstName} ${m.respondent.lastName}`,
         planKeys: m.plans.map((p) => p.planKey),
+        plans: m.plans.map((p) => ({
+          id: p.id,
+          planKey: p.planKey,
+          memberPartyRole:
+            p.memberPartyRole ??
+            (m.petitionerIsMember ? "PETITIONER" : "RESPONDENT"),
+          joinderRequired: Boolean(p.joinderRequired),
+        })),
       })),
     });
   } catch (e: any) {

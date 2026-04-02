@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { isLikelyValidEmail } from "@/lib/emailValidation";
 import { formatUsPhoneStored, normalizeUsPhone10Digits } from "@/lib/phoneUs";
 import { isValidUsPostalCode } from "@/lib/postalCodeUs";
 import { prisma } from "@/lib/prisma";
 import { petitionerIsPlanMember } from "@/lib/intakeMember";
+import { getSessionEmailFromRequest } from "@/lib/dashboardAccess";
+import { normalizeEmail } from "@/lib/auth";
 
 export const runtime = "nodejs"; // ensure Node runtime for Prisma
 
@@ -15,9 +17,10 @@ function parseIsoDateOnly(value: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { intake, chosenTemplates } = await req.json();
+    const sessionEmail = getSessionEmailFromRequest(req);
 
     const p = intake.petitioner;
     const r = intake.respondent;
@@ -88,6 +91,32 @@ export async function POST(req: Request) {
         address2: (b.address2 || "").trim() || null,
       }));
 
+    // Fallback linking flow:
+    // - Prefer authenticated session email
+    // - If intake is submitted without login, link to a verified user that matches
+    //   one of the party emails; if none exists, fall back to petitioner email.
+    let createdByEmail: string | null = sessionEmail;
+    if (!createdByEmail) {
+      const candidates = Array.from(
+        new Set([normalizeEmail(pEmail), normalizeEmail(rEmail)].filter(Boolean)),
+      );
+      if (candidates.length) {
+        const users = await prisma.user.findMany({
+          where: { email: { in: candidates } },
+          select: { email: true, emailVerifiedAt: true },
+        });
+        const verified = new Set(
+          users
+            .filter((u) => Boolean(u.emailVerifiedAt))
+            .map((u) => normalizeEmail(u.email)),
+        );
+        if (verified.has(normalizeEmail(pEmail))) createdByEmail = normalizeEmail(pEmail);
+        else if (verified.has(normalizeEmail(rEmail)))
+          createdByEmail = normalizeEmail(rEmail);
+        else createdByEmail = normalizeEmail(pEmail);
+      }
+    }
+
     const matter = await prisma.$transaction(async (tx) => {
       const petitioner = await tx.party.create({
         data: {
@@ -138,6 +167,7 @@ export async function POST(req: Request) {
           petitionerId: petitioner.id,
           respondentId: respondent.id,
 
+          createdByEmail,
           intakeCompletedAt: new Date(),
           workflowStatus: "OPEN",
 
