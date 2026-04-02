@@ -7,6 +7,14 @@ import { petitionerIsPlanMember } from "@/lib/intakeMember";
 
 export const runtime = "nodejs"; // ensure Node runtime for Prisma
 
+function parseIsoDateOnly(value: unknown): Date | null {
+  const s = String(value || "").trim();
+  // Intake date inputs are yyyy-mm-dd; reject partial/invalid strings.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const d = new Date(`${s}T00:00:00.000Z`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export async function POST(req: Request) {
   try {
     const { intake, chosenTemplates } = await req.json();
@@ -46,6 +54,26 @@ export async function POST(req: Request) {
     ) {
       return NextResponse.json(
         { error: "Each party needs a valid city, state, and ZIP code." },
+        { status: 400 },
+      );
+    }
+    const caseNumber = String(intake?.caseInfo?.caseNumber || "").trim();
+    if (!caseNumber) {
+      return NextResponse.json(
+        { error: "Case number is required before generating drafts." },
+        { status: 400 },
+      );
+    }
+    const dom = parseIsoDateOnly(intake?.caseInfo?.dom);
+    const dos = parseIsoDateOnly(intake?.caseInfo?.dos);
+    const dojRaw = String(intake?.caseInfo?.doj || "").trim();
+    const doj = dojRaw ? parseIsoDateOnly(dojRaw) : null;
+    if (!dom || !dos || (dojRaw && !doj)) {
+      return NextResponse.json(
+        {
+          error:
+            "Please enter valid case dates (Date of marriage and Date of separation; Date of judgment if provided).",
+        },
         { status: 400 },
       );
     }
@@ -99,12 +127,12 @@ export async function POST(req: Request) {
 
       const mat = await tx.matter.create({
         data: {
-          caseNumber: intake.caseInfo.caseNumber,
+          caseNumber,
           county: intake.caseInfo.county,
           otherCounty: intake.caseInfo.otherCounty || null,
-          dom: new Date(intake.caseInfo.dom),
-          dos: new Date(intake.caseInfo.dos),
-          doj: intake.caseInfo.doj ? new Date(intake.caseInfo.doj) : null,
+          dom,
+          dos,
+          doj,
           concurrentWithJudgment: Boolean(intake.caseInfo.concurrentWithJudgment),
 
           petitionerId: petitioner.id,
