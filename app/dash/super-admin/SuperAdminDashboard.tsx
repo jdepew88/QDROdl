@@ -133,8 +133,8 @@ export default function SuperAdminDashboard() {
       </section>
 
       <section className="mb-10 grid gap-6 lg:grid-cols-2">
-        <RevenueCard title="Fees collected (this month)" r={data.revenueMonth} />
-        <RevenueCard title="Fees collected (YTD)" r={data.revenueYear} />
+        <RevenueCard title="Fees collected (this month)" r={data.revenueMonth} stripeNote />
+        <RevenueCard title="Fees collected (YTD)" r={data.revenueYear} stripeNote />
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
@@ -206,9 +206,11 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 function RevenueCard({
   title,
   r,
+  stripeNote,
 }: {
   title: string;
   r: { order_prep: number; mailing: number; filing: number; total: number };
+  stripeNote?: boolean;
 }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-violet-950/20 p-5">
@@ -231,9 +233,14 @@ function RevenueCard({
           <dd>{money(r.total)}</dd>
         </div>
       </dl>
-      <p className="mt-3 text-xs text-zinc-500">
-        Ledger entries only—record payments below per matter. Stripe is not auto-synced yet.
-      </p>
+      {stripeNote && (
+        <p className="mt-3 text-xs text-zinc-500">
+          Includes manual staff entries and{" "}
+          <strong className="font-medium text-zinc-400">Stripe Checkout</strong> when sessions include{" "}
+          <code className="rounded bg-black/30 px-1">metadata.matterId</code> (see webhook{" "}
+          <code className="rounded bg-black/30 px-1">/api/webhooks/stripe</code>).
+        </p>
+      )}
     </div>
   );
 }
@@ -321,6 +328,33 @@ function MatterStaffPanel({
       if (!res.ok) throw new Error(j.error || "Fee record failed");
       setFeeAmt("");
       setStatusLine("Fee recorded.");
+      onSaved();
+    } catch (e: unknown) {
+      setStatusLine(e instanceof Error ? e.message : "Error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const markPartyPaid = async (
+    side: "petitioner" | "respondent",
+    paid: boolean,
+  ) => {
+    setBusy(`mark-${side}`);
+    setStatusLine(null);
+    try {
+      const body =
+        side === "petitioner"
+          ? { petitionerPaidAt: paid ? new Date().toISOString() : null }
+          : { respondentPaidAt: paid ? new Date().toISOString() : null };
+      const res = await fetch(`/api/matters/${matter.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.error || "Update failed");
+      setStatusLine(paid ? "Marked paid." : "Cleared paid flag.");
       onSaved();
     } catch (e: unknown) {
       setStatusLine(e instanceof Error ? e.message : "Error");
@@ -493,6 +527,77 @@ function MatterStaffPanel({
         >
           Collapse
         </button>
+      </div>
+
+      <div className="border-t border-white/10 pt-4">
+        <p className="mb-2 text-xs font-semibold text-zinc-500">
+          Split bill — mark party share paid
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-white/10 bg-zinc-900/40 p-3">
+            <p className="text-xs font-medium text-zinc-400">Petitioner</p>
+            <p className="mt-1 text-sm text-zinc-200">
+              {matter.petitionerPaidAt
+                ? new Date(matter.petitionerPaidAt).toLocaleString()
+                : "Not marked paid"}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => markPartyPaid("petitioner", true)}
+                className="rounded-lg bg-lime-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-lime-700 disabled:opacity-40"
+              >
+                Mark paid
+              </button>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => markPartyPaid("petitioner", false)}
+                className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-zinc-900/40 p-3">
+            <p className="text-xs font-medium text-zinc-400">Respondent</p>
+            <p className="mt-1 text-sm text-zinc-200">
+              {matter.respondentPaidAt
+                ? new Date(matter.respondentPaidAt).toLocaleString()
+                : "Not marked paid"}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => markPartyPaid("respondent", true)}
+                className="rounded-lg bg-lime-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-lime-700 disabled:opacity-40"
+              >
+                Mark paid
+              </button>
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => markPartyPaid("respondent", false)}
+                className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-zinc-300 hover:bg-white/5 disabled:opacity-40"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-zinc-500">
+          Stripe joinder checkout with ledger:{" "}
+          <a
+            href={`/plan/joinders?matterId=${matter.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-lime-400 underline"
+          >
+            /plan/joinders?matterId={matter.id.slice(0, 8)}…
+          </a>
+        </p>
       </div>
 
       <div className="border-t border-white/10 pt-4">

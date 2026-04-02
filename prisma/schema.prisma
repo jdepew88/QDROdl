@@ -170,6 +170,8 @@ model FeeLedgerEntry {
   amountCents Int
   recordedAt  DateTime @default(now())
   note        String?
+  /// Idempotency (e.g. Stripe Checkout Session id + line key).
+  sourceRef   String?  @unique
   matter      Matter   @relation(fields: [matterId], references: [id], onDelete: Cascade)
 
   @@index([matterId])

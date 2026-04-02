@@ -1,16 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Joinders in California dissolution — educational guide + optional Stripe checkout.
  * Practice varies by plan and court; users should confirm with plan counsel.
+ *
+ * Append `?matterId=<cuid>` so paid checkout posts fees to that matter (Stripe webhook).
  */
 export default function JoindersContent() {
   const [includeMailFiling, setIncludeMailFiling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [matterIdFromUrl, setMatterIdFromUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = new URLSearchParams(window.location.search).get("matterId");
+    setMatterIdFromUrl(id?.trim() || null);
+  }, []);
 
   const startCheckout = async () => {
     try {
@@ -19,7 +28,10 @@ export default function JoindersContent() {
       const res = await fetch("/api/checkout/joinder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ includeMailFiling }),
+        body: JSON.stringify({
+          includeMailFiling,
+          ...(matterIdFromUrl ? { matterId: matterIdFromUrl } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to start checkout");
@@ -192,6 +204,12 @@ export default function JoindersContent() {
                 court and mailing fees as quoted).
               </span>
             </label>
+            {matterIdFromUrl && (
+              <p className="mb-4 rounded-lg border border-lime-500/25 bg-lime-950/30 px-4 py-2 text-sm text-lime-100">
+                Checkout will be linked to matter <code className="text-lime-200">{matterIdFromUrl}</code> for
+                automatic fee ledger entries after Stripe confirms payment.
+              </p>
+            )}
             {err && (
               <p className="mb-4 rounded-lg border border-rose-500/30 bg-rose-950/40 px-4 py-2 text-sm text-rose-200">
                 {err}

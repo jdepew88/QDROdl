@@ -1,11 +1,27 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const includeMailFiling = Boolean(body?.includeMailFiling);
+    const matterIdRaw =
+      typeof body?.matterId === "string" ? body.matterId.trim() : "";
+    if (matterIdRaw) {
+      const exists = await prisma.matter.findUnique({
+        where: { id: matterIdRaw },
+        select: { id: true },
+      });
+      if (!exists) {
+        return NextResponse.json(
+          { error: "Invalid matterId — matter not found." },
+          { status: 400 },
+        );
+      }
+    }
+
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       { price: process.env.STRIPE_PRICE_JOINDER!, quantity: 1 },
     ];
@@ -24,6 +40,7 @@ export async function POST(req: Request) {
       metadata: {
         product: "joinder_preparation",
         includeMailFiling: includeMailFiling ? "true" : "false",
+        ...(matterIdRaw ? { matterId: matterIdRaw } : {}),
       },
     });
     return NextResponse.json({ url: session.url }, { status: 200 });
