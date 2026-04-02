@@ -35,16 +35,16 @@ export default function ProcessOverviewContent() {
                 <div className="absolute -left-12 top-6 hidden h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-zinc-900 text-sm md:flex">
                   {idx + 1}
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-lg font-semibold text-stone-50">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <h2 className="min-w-0 flex-1 text-lg font-semibold text-stone-50">
                     <span className="mr-2">{step.icon}</span>
                     {idx + 1}) {step.title}
                   </h2>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="rounded-full border border-lime-500/30 bg-lime-500/10 px-2.5 py-1 font-medium text-lime-300">
+                  <div className="flex shrink-0 flex-col items-end gap-1 text-right text-xs">
+                    <span className="inline-flex rounded-full border border-lime-500/30 bg-lime-500/10 px-2.5 py-1 font-medium text-lime-300">
                       {step.phase}
                     </span>
-                    <span className="rounded-full border border-white/10 bg-black/20 px-2.5 py-1 text-zinc-300">
+                    <span className="max-w-[14rem] leading-snug text-zinc-400">
                       {step.eta}
                     </span>
                   </div>
