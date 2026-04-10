@@ -77,7 +77,7 @@ export default function SupportedPlansHomeSection() {
 
         <p className="mt-10 text-center">
           <Link
-            href="/intake/plans"
+            href="/chat"
             className="inline-flex text-sm font-semibold text-lime-300 underline-offset-4 transition hover:text-lime-200 hover:underline"
           >
             Not sure which plan applies? We&apos;ll help you choose →

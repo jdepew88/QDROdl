@@ -224,6 +224,22 @@ model CommunicationLog {
   @@index([matterId])
 }
 
+/// Super-admin curated QDRO chat knowledge ("walled garden" answers).
+model ChatKnowledgeEntry {
+  id             String   @id @default(cuid())
+  questionSample String   @db.Text
+  answerText     String   @db.Text
+  tagsCsv        String?
+  isActive       Boolean  @default(true)
+  source         String   @default("superadmin")
+  createdByEmail String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([createdAt])
+}
+
 model AttorneyInfo {
   id        String  @id @default(cuid())
   matterId  String
