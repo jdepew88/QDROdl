@@ -573,7 +573,7 @@ export default function EditMatterPage({
             {form[side].spouseType !== "Husband" && (
               <input
                 className="md:col-span-2 rounded-lg border border-white/15 bg-zinc-900 p-3 text-stone-50"
-                placeholder="FKA last name"
+                placeholder="Restored surname if reverting (e.g. maiden); ‘Last name’ = current legal name on case"
                 value={form[side].fkaLastName}
                 onChange={(e) => pf(side, "fkaLastName", e.target.value)}
               />

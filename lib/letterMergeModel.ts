@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { dec } from "@/lib/crypto";
 import { buildViewModel } from "@/lib/viewModel";
 import { formatMergeDateToday } from "@/lib/mergeFormat";
+import {
+  partyAddressLineName,
+  partyCaptionNameUpper,
+} from "@/lib/partyMergeNames";
 
 function safeDec(b64?: string | null) {
   try {
@@ -9,15 +13,6 @@ function safeDec(b64?: string | null) {
   } catch {
     return "";
   }
-}
-
-function partyLine(p: {
-  firstName: string;
-  lastName: string;
-  fkaLastName?: string | null;
-}) {
-  const base = `${p.firstName} ${p.lastName}`.trim();
-  return p.fkaLastName ? `${base} (fka ${p.fkaLastName})` : base;
 }
 
 /**
@@ -34,8 +29,10 @@ export async function buildLetterMergeModel(matterId: string) {
 
   const countyDisplay =
     m.county === "Other" ? m.otherCounty || "California" : m.county;
-  const petName = partyLine(m.petitioner).toUpperCase();
-  const respName = partyLine(m.respondent).toUpperCase();
+  const petCaption = partyCaptionNameUpper(m.petitioner);
+  const petAddressLine = partyAddressLineName(m.petitioner);
+  const respCaption = partyCaptionNameUpper(m.respondent);
+  const respAddressLine = partyAddressLineName(m.respondent);
 
   const petDob = safeDec(m.petitioner.dobEnc);
   const petSsn = safeDec(m.petitioner.ssnEnc);
@@ -49,9 +46,9 @@ export async function buildLetterMergeModel(matterId: string) {
   };
 
   const identifiersBlock = [
-    `Petitioner:\n${dobSsn(petName, petDob, petSsn)}`,
+    `Petitioner:\n${dobSsn(petAddressLine, petDob, petSsn)}`,
     "",
-    `Respondent:\n${dobSsn(respName, respDob, respSsn)}`,
+    `Respondent:\n${dobSsn(respAddressLine, respDob, respSsn)}`,
   ].join("\n");
 
   return {
@@ -68,8 +65,8 @@ export async function buildLetterMergeModel(matterId: string) {
     attachment: {
       case_caption_line: `In re the case of ${m.caseNumber}`,
       county_court_line: `${countyDisplay} County`,
-      petitioner_heading: `Petitioner: ${petName}`,
-      respondent_heading: `Respondent: ${respName}`,
+      petitioner_heading: `Petitioner: ${petCaption}`,
+      respondent_heading: `Respondent: ${respCaption}`,
       identifiers_intro:
         "The date of birth and Social Security number for each party are listed below.",
       petitioner_dob: petDob || "",

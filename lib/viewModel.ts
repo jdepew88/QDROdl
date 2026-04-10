@@ -1,30 +1,26 @@
 /**
  * Data object passed to docx-templates (`cmdDelimiter` `{{` `}}`). Each field replaces client-specific
  * text in a Word template—sample orders used as models must have those facts removed and swapped
- * for these paths (examples: `{{party.petitioner.full_name}}`, `{{caseInfo.number}}`, `{{court.county}}`,
+ * for these paths (examples: `{{caseInfo.number}}`, `{{court.county}}`,
  * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}` (formatted `Month DD, YYYY`, two-digit day, UTC calendar),
- * `{{judgment.filed_text}}` (judgment date, concurrent-filing
- * paragraph when no date + concurrent checkbox, else `not yet filed`), `{{member.display_name}}`, `{{altpayee.display_name}}`,
+ * `{{judgment.filed_text}}`, `{{member.caption_full_name}}`, `{{member.address_full_name}}`, `{{member.signature_full_name}}`,
  * `{{participant.pronouns.subject}}` / `object` / `possessive` / `reflexive`, `{{participant.Subject}}`,
- * `{{signature.petitioner.caption_block}}`, `{{signature.respondent.caption_block}}`,
- * `{{signature.petitioner.signatory_line}}`, `{{nonmember_beneficiary.b1.name}}` … `b4`,
- * `{{calpers.order_model}}`, `{{calpers.option_3w}}`, `{{calpers.model_c_form}}`).
+ * `{{signature.petitioner.caption_block}}`, `{{signature.petitioner.printed_name}}`, `{{signature.petitioner.signatory_line}}`,
+ * `{{nonmember_beneficiary.b1.name}}` … `b4`, `{{calpers.order_model}}`, etc.).
  *
- * Party-related **names** in merge output are **ALL CAPS** (parties, member/altpayee display names, first/last/fka,
- * Model B beneficiary `name` fields, attorney `name` merge fields). Pronouns stay normal case.
+ * **FKA / former name (Party row):** `lastName` = current legal surname on the case caption (e.g. married **Doe**).
+ * `fkaLastName` = surname being **restored** (e.g. **Smith**). Merge output:
+ * - `caption_full_name` → `JANE DOE` (ALL CAPS)
+ * - `address_full_name` → `JANE SMITH (fka Doe)` — caps on personal name; lowercase `fka`; title-case current surname in parens
+ * - `signature_full_name` → `JANE SMITH` (ALL CAPS)
+ * Same three fields on `party.petitioner` / `party.respondent`, `member`, `altpayee`, `nonmember`.
+ * `party.*.full_name` and `member.name_line` alias **caption** for backward compatibility.
+ * `member.display_name` / `altpayee.display_name` = **address** line (with FKA parenthetical when set).
  *
- * CalPERS Model A (line-based pleading block example, page 1 top-left):
- *   {{party.petitioner.full_name}}
- *   Petitioner, In Pro Per
- *   {{member.address_line1}}
- *   {{member.address_line2}}
- *   {{party.petitioner.phone}}
+ * Pro per `caption_block` is built with: `Petitioner JANE DOE`, next line `JANE SMITH (fka Doe)`, then street/city/ZIP/phone.
+ * Attorney caption blocks unchanged. Pronouns stay normal case. Model B beneficiary `name` fields stay ALL CAPS.
  *
- * Core placeholders (also use in body): `{{caseInfo.number}}` (not `case.*`—`case` is a JS keyword in docx-templates), `{{court.county}}`,
- * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}`, `{{party.petitioner.full_name}}`,
- * `{{party.respondent.full_name}}`, `{{member.display_name}}`, `{{altpayee.display_name}}`,
- * `{{member.address_line1}}`, `{{member.address_line2}}`, `{{altpayee.address_line1}}`,
- * `{{altpayee.address_line2}}`, `{{party.petitioner.phone}}`, `{{party.respondent.phone}}`.
+ * Core: `{{caseInfo.number}}`, `{{court.county}}`, dates, phones, addresses, `{{calpers.order_model}}`, …
  */
 import { prisma } from "@/lib/prisma";
 import { dec } from "@/lib/crypto";
@@ -39,6 +35,11 @@ import {
   partyMergeAddressLine2,
 } from "@/lib/partyAddressLines";
 import { formatMergeDate } from "@/lib/mergeFormat";
+import {
+  partyAddressLineName,
+  partyCaptionNameUpper,
+  partySignatureNameUpper,
+} from "@/lib/partyMergeNames";
 
 function partyNameUpper(s: string) {
   return (s || "").toUpperCase();
@@ -55,17 +56,6 @@ function safeDec(b64?: string | null) {
 /** Shown in DOCX when no judgment date is on file but the order is filed with the judgment. */
 const JUDGMENT_PENDING_CONCURRENT_TEXT =
   "Judgment of Dissolution of Marriage has not yet been entered in this matter, and this Order will be filed concurrently with the Parties' Judgment of Dissolution of Marriage.";
-
-function displayName(p: {
-  firstName: string;
-  lastName: string;
-  fkaLastName?: string | null;
-}) {
-  const base = `${p.firstName} ${p.lastName}`.trim();
-  return p.fkaLastName
-    ? `${base} (fka ${p.fkaLastName})`
-    : base;
-}
 
 export async function buildViewModel(matterId: string) {
   const m = await prisma.matter.findUnique({
@@ -87,8 +77,12 @@ export async function buildViewModel(matterId: string) {
   const petAtt = m.attorneys.find((a) => a.side === "PETITIONER");
   const respAtt = m.attorneys.find((a) => a.side === "RESPONDENT");
 
-  const petName = partyNameUpper(displayName(m.petitioner));
-  const respName = partyNameUpper(displayName(m.respondent));
+  const petCaptionUpper = partyCaptionNameUpper(m.petitioner);
+  const petAddressLine = partyAddressLineName(m.petitioner);
+  const petSignatureUpper = partySignatureNameUpper(m.petitioner);
+  const respCaptionUpper = partyCaptionNameUpper(m.respondent);
+  const respAddressLine = partyAddressLineName(m.respondent);
+  const respSignatureUpper = partySignatureNameUpper(m.respondent);
 
   const petCaption = petAtt?.name?.trim()
     ? attorneyCaptionBlock({
@@ -99,7 +93,8 @@ export async function buildViewModel(matterId: string) {
         forLabel: "Attorney for Petitioner",
       })
     : proPerCaptionBlock({
-        fullName: petName,
+        captionNameUpper: petCaptionUpper,
+        addressLineName: petAddressLine,
         role: "Petitioner",
         address1: partyMergeAddressLine1(m.petitioner),
         address2: partyMergeAddressLine2(m.petitioner),
@@ -115,7 +110,8 @@ export async function buildViewModel(matterId: string) {
         forLabel: "Attorney for Respondent",
       })
     : proPerCaptionBlock({
-        fullName: respName,
+        captionNameUpper: respCaptionUpper,
+        addressLineName: respAddressLine,
         role: "Respondent",
         address1: partyMergeAddressLine1(m.respondent),
         address2: partyMergeAddressLine2(m.respondent),
@@ -165,14 +161,24 @@ export async function buildViewModel(matterId: string) {
     joinder: { filed_text: "" },
     party: {
       petitioner: {
-        full_name: petName,
+        /** Current legal caption name (ALL CAPS), e.g. `JANE DOE`. */
+        caption_full_name: petCaptionUpper,
+        /** Line above address, e.g. `JANE SMITH (fka Doe)` when FKA set. */
+        address_full_name: petAddressLine,
+        /** Signature / typed name (ALL CAPS), e.g. `JANE SMITH` when restoring surname. */
+        signature_full_name: petSignatureUpper,
+        /** @deprecated Prefer caption_full_name — same as caption_full_name. */
+        full_name: petCaptionUpper,
         first: partyNameUpper(m.petitioner.firstName),
         last: partyNameUpper(m.petitioner.lastName),
         fka_last: partyNameUpper(m.petitioner.fkaLastName || ""),
         phone: m.petitioner.phone || "",
       },
       respondent: {
-        full_name: respName,
+        caption_full_name: respCaptionUpper,
+        address_full_name: respAddressLine,
+        signature_full_name: respSignatureUpper,
+        full_name: respCaptionUpper,
         first: partyNameUpper(m.respondent.firstName),
         last: partyNameUpper(m.respondent.lastName),
         fka_last: partyNameUpper(m.respondent.fkaLastName || ""),
@@ -181,8 +187,11 @@ export async function buildViewModel(matterId: string) {
     },
     member: {
       side: memberSide,
-      name_line: partyNameUpper(`${member.firstName} ${member.lastName}`),
-      display_name: partyNameUpper(displayName(member)),
+      caption_full_name: partyCaptionNameUpper(member),
+      address_full_name: partyAddressLineName(member),
+      signature_full_name: partySignatureNameUpper(member),
+      name_line: partyCaptionNameUpper(member),
+      display_name: partyAddressLineName(member),
       address_line1: partyMergeAddressLine1(member),
       address_line2: partyMergeAddressLine2(member),
       phone: member.phone || "",
@@ -191,7 +200,10 @@ export async function buildViewModel(matterId: string) {
     },
     nonmember: {
       side: memberSide === "PETITIONER" ? "RESPONDENT" : "PETITIONER",
-      display_name: partyNameUpper(displayName(nonMember)),
+      caption_full_name: partyCaptionNameUpper(nonMember),
+      address_full_name: partyAddressLineName(nonMember),
+      signature_full_name: partySignatureNameUpper(nonMember),
+      display_name: partyAddressLineName(nonMember),
     },
     participant: {
       pronouns: participantPronouns,
@@ -201,8 +213,11 @@ export async function buildViewModel(matterId: string) {
       ),
     },
     altpayee: {
-      name_line: partyNameUpper(`${nonMember.firstName} ${nonMember.lastName}`),
-      display_name: partyNameUpper(displayName(nonMember)),
+      caption_full_name: partyCaptionNameUpper(nonMember),
+      address_full_name: partyAddressLineName(nonMember),
+      signature_full_name: partySignatureNameUpper(nonMember),
+      name_line: partyCaptionNameUpper(nonMember),
+      display_name: partyAddressLineName(nonMember),
       address_line1: partyMergeAddressLine1(nonMember),
       address_line2: partyMergeAddressLine2(nonMember),
       phone: nonMember.phone || "",
@@ -232,16 +247,19 @@ export async function buildViewModel(matterId: string) {
     signature: {
       petitioner: {
         caption_block: petCaption,
+        /** Typed name under signature (ALL CAPS; restored surname when FKA set). */
+        printed_name: petSignatureUpper,
         /** Line printed at the signature for Petitioner */
         signatory_line: petProPer
           ? "Petitioner, In Pro Per"
-          : petName,
+          : petSignatureUpper,
       },
       respondent: {
         caption_block: respCaption,
+        printed_name: respSignatureUpper,
         signatory_line: respProPer
           ? "Respondent, In Pro Per"
-          : respName,
+          : respSignatureUpper,
       },
     },
     preparer: { name: "Your Company", title: "QDRO Preparer" },

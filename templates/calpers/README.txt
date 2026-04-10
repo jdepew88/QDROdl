@@ -11,15 +11,20 @@ Merge fields (docx-templates: {{path}})
   {{caseInfo.number}}
   {{court.county}}
   {{dates.dom}}  {{dates.dos}}  {{dates.doj}}
-  {{party.petitioner.full_name}}  {{party.respondent.full_name}}
+  Party names (FKA): caption_full_name, address_full_name, signature_full_name (each party); full_name = caption (legacy).
+  {{party.petitioner.caption_full_name}}  {{party.petitioner.address_full_name}}  {{party.petitioner.signature_full_name}}
   {{party.petitioner.phone}}  {{party.respondent.phone}}
-  {{member.display_name}}  {{altpayee.display_name}}
+  {{member.caption_full_name}}  {{member.address_full_name}}  {{member.signature_full_name}}
+  {{member.display_name}} (= address_full_name)  {{altpayee.display_name}}
   {{member.address_line1}}  {{member.address_line2}}
   {{altpayee.address_line1}}  {{altpayee.address_line2}}
 
-Line-based pleading block (page 1, top-left example for pro per petitioner / member):
-  {{party.petitioner.full_name}}
-  Petitioner, In Pro Per
+FKA example (Jane; legal/caption Doe; restoring Smith): caption JANE DOE; address line JANE SMITH (fka Doe); signature JANE SMITH.
+Pro per caption_block from server is built with Petitioner/Respondent + caption + address name lines automatically.
+
+Manual pleading lines (if not using caption_block):
+  Petitioner {{party.petitioner.caption_full_name}}
+  {{party.petitioner.address_full_name}}
   {{member.address_line1}}
   {{member.address_line2}}
   {{party.petitioner.phone}}
