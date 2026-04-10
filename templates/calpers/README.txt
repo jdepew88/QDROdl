@@ -4,6 +4,9 @@ Model A — petitioner is plan member (dual IPP variants; chosen from petitioner
   CalPERS_Model_A_Hus_Pet_Mem_DUAL_IPP.docx   (Husband petitioner, or default)
   CalPERS_Model_A_Wife_Pet_Mem_DUAL_IPP.docx (Wife petitioner)
 
+Model A — respondent is plan member:
+  CalPERS_Model_A_Wife_Pet_Mem_DUAL_IPP.docx (same file as wife petitioner–member; merge data still maps member/altpayee from DB)
+
 Merge fields (docx-templates: {{path}})
   {{caseInfo.number}}
   {{court.county}}

@@ -52,7 +52,9 @@ export const TEMPLATE_FILES: Record<TemplateId, string> = {
   /** Model A, petitioner = plan member, wife petitioner. */
   "calpers-modA-pet-mem-wife":
     "calpers/CalPERS_Model_A_Wife_Pet_Mem_DUAL_IPP.docx",
-  "calpers-modA-resp-mem": "calpers/CalPERS_Model_A_Wife_Res_Mem_FULL.docx",
+  /** Model A, respondent = plan member (uses wife petitioner–member dual IPP template file). */
+  "calpers-modA-resp-mem":
+    "calpers/CalPERS_Model_A_Wife_Pet_Mem_DUAL_IPP.docx",
   "calpers-modB-pet-mem": "calpers/mod-b-petitioner-member.docx",
   "calpers-modB-resp-mem": "calpers/mod-b-respondent-member.docx",
   "calpers-modC-pet-mem": "calpers/mod-c-petitioner-member.docx",
