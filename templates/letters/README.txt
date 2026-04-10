@@ -38,7 +38,7 @@ Non-filed attachment / caption block
 QDRO/DRO order merge fields
 ---------------------------
 Letters also receive the full matter view model used for draft orders. See the
-top-of-file comment in lib/viewModel.ts for paths such as {{case.number}},
+top-of-file comment in lib/viewModel.ts for paths such as {{caseInfo.number}},
 {{court.county}}, {{party.petitioner.full_name}}, {{member.display_name}}, etc.
 
 Remove any prior third-party letterhead from your Word originals; keep only

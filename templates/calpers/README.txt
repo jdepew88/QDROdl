@@ -4,7 +4,7 @@ Model A — petitioner is member (current file; dual IPP variant):
   CalPERS_Model_A_Hus_Pet_Mem_DUAL_IPP.docx
 
 Merge fields (docx-templates: {{path}})
-  {{case.number}}
+  {{caseInfo.number}}
   {{court.county}}
   {{dates.dom}}  {{dates.dos}}  {{dates.doj}}
   {{party.petitioner.full_name}}  {{party.respondent.full_name}}

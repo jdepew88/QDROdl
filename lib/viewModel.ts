@@ -1,7 +1,7 @@
 /**
  * Data object passed to docx-templates (`cmdDelimiter` `{{` `}}`). Each field replaces client-specific
  * text in a Word template—sample orders used as models must have those facts removed and swapped
- * for these paths (examples: `{{party.petitioner.full_name}}`, `{{case.number}}`, `{{court.county}}`,
+ * for these paths (examples: `{{party.petitioner.full_name}}`, `{{caseInfo.number}}`, `{{court.county}}`,
  * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}`, `{{judgment.filed_text}}` (judgment date, concurrent-filing
  * paragraph when no date + concurrent checkbox, else `not yet filed`), `{{member.display_name}}`, `{{altpayee.display_name}}`,
  * `{{participant.pronouns.subject}}` / `object` / `possessive` / `reflexive`, `{{participant.Subject}}`,
@@ -16,7 +16,7 @@
  *   {{member.address_line2}}
  *   {{party.petitioner.phone}}
  *
- * Core placeholders (also use in body): `{{case.number}}`, `{{court.county}}`,
+ * Core placeholders (also use in body): `{{caseInfo.number}}` (not `case.*`—`case` is a JS keyword in docx-templates), `{{court.county}}`,
  * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}`, `{{party.petitioner.full_name}}`,
  * `{{party.respondent.full_name}}`, `{{member.display_name}}`, `{{altpayee.display_name}}`,
  * `{{member.address_line1}}`, `{{member.address_line2}}`, `{{altpayee.address_line1}}`,
@@ -140,7 +140,7 @@ export async function buildViewModel(matterId: string) {
       county:
         m.county === "Other" ? m.otherCounty || "California" : m.county,
     },
-    case: { number: m.caseNumber },
+    caseInfo: { number: m.caseNumber },
     dates: { dom: fmtDate(m.dom), dos: fmtDate(m.dos), doj: fmtDate(m.doj) },
     judgment: { filed_text: judgmentFiledText },
     joinder: { filed_text: "" },
