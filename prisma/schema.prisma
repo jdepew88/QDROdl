@@ -240,6 +240,22 @@ model ChatKnowledgeEntry {
   @@index([createdAt])
 }
 
+/// Chat interactions for QA, safety review, and model improvement.
+model ChatConversationLog {
+  id               String   @id @default(cuid())
+  userEmail        String?
+  question         String   @db.Text
+  answer           String   @db.Text
+  blockedByPolicy  Boolean  @default(false)
+  usedModel        Boolean  @default(false)
+  modelName        String?
+  sourceContext    String?
+  createdAt        DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([blockedByPolicy])
+}
+
 model AttorneyInfo {
   id        String  @id @default(cuid())
   matterId  String

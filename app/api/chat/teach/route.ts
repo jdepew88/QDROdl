@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSuperAdminRequest } from "@/lib/dashboardAccess";
+import { requirePrimarySuperAdminRequest } from "@/lib/dashboardAccess";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
-  const gate = await requireSuperAdminRequest(req);
+  const gate = await requirePrimarySuperAdminRequest(req);
   if (gate.ok === false) return gate.response;
 
   const body = await req.json().catch(() => null);

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { buildKnowledgeText } from "@/lib/chatKnowledgeBase";
+import { getSessionEmailFromRequest } from "@/lib/dashboardAccess";
+import { isQuestionInScope, policyBlockMessage } from "@/lib/chatGuardrails";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -69,14 +71,45 @@ export async function POST(req: NextRequest) {
     if (!question) {
       return NextResponse.json({ error: "Question is required." }, { status: 400 });
     }
+    const userEmail = getSessionEmailFromRequest(req);
+    const scope = isQuestionInScope(question);
+    if (!scope.inScope) {
+      const answer = policyBlockMessage();
+      await prisma.chatConversationLog.create({
+        data: {
+          userEmail,
+          question,
+          answer,
+          blockedByPolicy: true,
+          usedModel: false,
+          sourceContext: scope.reason,
+        },
+      });
+      return NextResponse.json({
+        answer,
+        usedModel: false,
+        blocked: true,
+      });
+    }
 
     const contextText = await buildCuratedContext(question);
     const apiKey = process.env.OPENAI_API_KEY || "";
     const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
     if (!apiKey) {
+      const answer = fallbackAnswer(question, contextText);
+      await prisma.chatConversationLog.create({
+        data: {
+          userEmail,
+          question,
+          answer,
+          blockedByPolicy: false,
+          usedModel: false,
+          sourceContext: "fallback:no_api_key",
+        },
+      });
       return NextResponse.json({
-        answer: fallbackAnswer(question, contextText),
+        answer,
         usedModel: false,
       });
     }
@@ -116,11 +149,34 @@ export async function POST(req: NextRequest) {
     const json = await resp.json().catch(() => ({}));
     const answer = String(json?.choices?.[0]?.message?.content || "").trim();
     if (!resp.ok || !answer) {
+      const fallback = fallbackAnswer(question, contextText);
+      await prisma.chatConversationLog.create({
+        data: {
+          userEmail,
+          question,
+          answer: fallback,
+          blockedByPolicy: false,
+          usedModel: false,
+          modelName: model,
+          sourceContext: "fallback:model_error",
+        },
+      });
       return NextResponse.json({
-        answer: fallbackAnswer(question, contextText),
+        answer: fallback,
         usedModel: false,
       });
     }
+    await prisma.chatConversationLog.create({
+      data: {
+        userEmail,
+        question,
+        answer,
+        blockedByPolicy: false,
+        usedModel: true,
+        modelName: model,
+        sourceContext: "llm",
+      },
+    });
 
     return NextResponse.json({ answer, usedModel: true });
   } catch (e: any) {

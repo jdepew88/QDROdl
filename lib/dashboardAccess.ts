@@ -13,6 +13,15 @@ export function superAdminEmailsFromEnv(): Set<string> {
   return set;
 }
 
+export function primarySuperAdminEmail(): string {
+  const raw = process.env.SUPER_ADMIN_EMAILS || "";
+  const first = raw
+    .split(",")
+    .map((x) => normalizeEmail(x.trim()))
+    .find(Boolean);
+  return first || "joeydepew@gmail.com";
+}
+
 export function getSessionEmailFromRequest(req: NextRequest): string | null {
   const token = req.cookies.get(getAuthCookieName())?.value || null;
   const s = verifySession(token);
@@ -73,4 +82,23 @@ export async function requireSuperAdminRequest(req: NextRequest): Promise<
     };
   }
   return { ok: true as const, email };
+}
+
+export async function requirePrimarySuperAdminRequest(req: NextRequest): Promise<
+  | { ok: true; email: string }
+  | { ok: false; response: NextResponse }
+> {
+  const gate = await requireSuperAdminRequest(req);
+  if (gate.ok === false) return gate;
+  const primary = primarySuperAdminEmail();
+  if (normalizeEmail(gate.email) !== normalizeEmail(primary)) {
+    return {
+      ok: false as const,
+      response: NextResponse.json(
+        { error: "Forbidden: primary super-admin only." },
+        { status: 403 },
+      ),
+    };
+  }
+  return gate;
 }
