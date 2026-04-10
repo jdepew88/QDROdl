@@ -30,12 +30,20 @@ export async function isSuperAdminEmail(email: string): Promise<boolean> {
 }
 
 export function userCanAccessMatter(
-  matter: { petitioner: Party; respondent: Party },
+  matter: {
+    petitioner: Party;
+    respondent: Party;
+    createdByEmail?: string | null;
+  },
   userEmail: string,
   isAdmin: boolean,
 ): boolean {
   if (isAdmin) return true;
   const n = normalizeEmail(userEmail);
+  const creator = matter.createdByEmail
+    ? normalizeEmail(matter.createdByEmail)
+    : "";
+  if (creator && creator === n) return true;
   return (
     normalizeEmail(matter.petitioner.email) === n ||
     normalizeEmail(matter.respondent.email) === n
