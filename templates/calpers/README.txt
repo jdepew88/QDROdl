@@ -1,7 +1,7 @@
 CalPERS DOCX templates live in this folder. Paths are registered in data/templates.ts.
 
-Model A — petitioner is member (current file):
-  CalPERS_Model_A_Hus_Pet_Mem.docx
+Model A — petitioner is member (current file; dual IPP variant):
+  CalPERS_Model_A_Hus_Pet_Mem_DUAL_IPP.docx
 
 Merge fields (docx-templates: {{path}})
   {{case.number}}

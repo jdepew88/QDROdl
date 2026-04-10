@@ -2,7 +2,8 @@
  * Data object passed to docx-templates (`cmdDelimiter` `{{` `}}`). Each field replaces client-specific
  * text in a Word template—sample orders used as models must have those facts removed and swapped
  * for these paths (examples: `{{party.petitioner.full_name}}`, `{{case.number}}`, `{{court.county}}`,
- * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}`, `{{member.display_name}}`, `{{altpayee.display_name}}`,
+ * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}`, `{{judgment.filed_text}}` (judgment date, concurrent-filing
+ * paragraph when no date + concurrent checkbox, else `not yet filed`), `{{member.display_name}}`, `{{altpayee.display_name}}`,
  * `{{participant.pronouns.subject}}` / `object` / `possessive` / `reflexive`, `{{participant.Subject}}`,
  * `{{signature.petitioner.caption_block}}`, `{{signature.respondent.caption_block}}`,
  * `{{signature.petitioner.signatory_line}}`, `{{nonmember_beneficiary.b1.name}}` … `b4`,
@@ -47,6 +48,10 @@ function safeDec(b64?: string | null) {
     return "";
   }
 }
+
+/** Shown in DOCX when no judgment date is on file but the order is filed with the judgment. */
+const JUDGMENT_PENDING_CONCURRENT_TEXT =
+  "Judgment of Dissolution of Marriage has not yet been entered in this matter, and this Order will be filed concurrently with the Parties' Judgment of Dissolution of Marriage.";
 
 function displayName(p: {
   firstName: string;
@@ -124,6 +129,12 @@ export async function buildViewModel(matterId: string) {
   const beneMerge = mergeNonmemberBeneficiaryRows(m.altPayeeBeneficiaries);
   const calpersSel = m.plans.find((p) => p.planKey === "calpers");
 
+  const judgmentFiledText = m.doj
+    ? fmtDate(m.doj)
+    : m.concurrentWithJudgment
+      ? JUDGMENT_PENDING_CONCURRENT_TEXT
+      : "not yet filed";
+
   return {
     court: {
       county:
@@ -131,7 +142,7 @@ export async function buildViewModel(matterId: string) {
     },
     case: { number: m.caseNumber },
     dates: { dom: fmtDate(m.dom), dos: fmtDate(m.dos), doj: fmtDate(m.doj) },
-    judgment: { filed_text: m.doj ? fmtDate(m.doj) : "not yet filed" },
+    judgment: { filed_text: judgmentFiledText },
     joinder: { filed_text: "" },
     party: {
       petitioner: {
