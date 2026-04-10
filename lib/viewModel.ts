@@ -2,12 +2,16 @@
  * Data object passed to docx-templates (`cmdDelimiter` `{{` `}}`). Each field replaces client-specific
  * text in a Word template—sample orders used as models must have those facts removed and swapped
  * for these paths (examples: `{{party.petitioner.full_name}}`, `{{caseInfo.number}}`, `{{court.county}}`,
- * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}`, `{{judgment.filed_text}}` (judgment date, concurrent-filing
+ * `{{dates.dom}}`, `{{dates.dos}}`, `{{dates.doj}}` (formatted `Month DD, YYYY`, two-digit day, UTC calendar),
+ * `{{judgment.filed_text}}` (judgment date, concurrent-filing
  * paragraph when no date + concurrent checkbox, else `not yet filed`), `{{member.display_name}}`, `{{altpayee.display_name}}`,
  * `{{participant.pronouns.subject}}` / `object` / `possessive` / `reflexive`, `{{participant.Subject}}`,
  * `{{signature.petitioner.caption_block}}`, `{{signature.respondent.caption_block}}`,
  * `{{signature.petitioner.signatory_line}}`, `{{nonmember_beneficiary.b1.name}}` … `b4`,
  * `{{calpers.order_model}}`, `{{calpers.option_3w}}`, `{{calpers.model_c_form}}`).
+ *
+ * Party-related **names** in merge output are **ALL CAPS** (parties, member/altpayee display names, first/last/fka,
+ * Model B beneficiary `name` fields, attorney `name` merge fields). Pronouns stay normal case.
  *
  * CalPERS Model A (line-based pleading block example, page 1 top-left):
  *   {{party.petitioner.full_name}}
@@ -34,11 +38,10 @@ import {
   partyMergeAddressLine1,
   partyMergeAddressLine2,
 } from "@/lib/partyAddressLines";
+import { formatMergeDate } from "@/lib/mergeFormat";
 
-function fmtDate(d: any) {
-  if (!d) return "";
-  const date = typeof d === "string" ? new Date(d) : d;
-  return date.toLocaleDateString("en-US");
+function partyNameUpper(s: string) {
+  return (s || "").toUpperCase();
 }
 
 function safeDec(b64?: string | null) {
@@ -84,8 +87,8 @@ export async function buildViewModel(matterId: string) {
   const petAtt = m.attorneys.find((a) => a.side === "PETITIONER");
   const respAtt = m.attorneys.find((a) => a.side === "RESPONDENT");
 
-  const petName = displayName(m.petitioner);
-  const respName = displayName(m.respondent);
+  const petName = partyNameUpper(displayName(m.petitioner));
+  const respName = partyNameUpper(displayName(m.respondent));
 
   const petCaption = petAtt?.name?.trim()
     ? attorneyCaptionBlock({
@@ -130,10 +133,22 @@ export async function buildViewModel(matterId: string) {
   const calpersSel = m.plans.find((p) => p.planKey === "calpers");
 
   const judgmentFiledText = m.doj
-    ? fmtDate(m.doj)
+    ? formatMergeDate(m.doj)
     : m.concurrentWithJudgment
       ? JUDGMENT_PENDING_CONCURRENT_TEXT
       : "not yet filed";
+
+  const beneRows = beneMerge.nonmember_beneficiary_rows.map((r) => ({
+    ...r,
+    name: partyNameUpper(r.name),
+  }));
+  const beneSlots = beneMerge.nonmember_beneficiary;
+  const nonmemberBeneficiaryUpper = {
+    b1: { ...beneSlots.b1, name: partyNameUpper(beneSlots.b1.name) },
+    b2: { ...beneSlots.b2, name: partyNameUpper(beneSlots.b2.name) },
+    b3: { ...beneSlots.b3, name: partyNameUpper(beneSlots.b3.name) },
+    b4: { ...beneSlots.b4, name: partyNameUpper(beneSlots.b4.name) },
+  };
 
   return {
     court: {
@@ -141,29 +156,33 @@ export async function buildViewModel(matterId: string) {
         m.county === "Other" ? m.otherCounty || "California" : m.county,
     },
     caseInfo: { number: m.caseNumber },
-    dates: { dom: fmtDate(m.dom), dos: fmtDate(m.dos), doj: fmtDate(m.doj) },
+    dates: {
+      dom: formatMergeDate(m.dom),
+      dos: formatMergeDate(m.dos),
+      doj: formatMergeDate(m.doj),
+    },
     judgment: { filed_text: judgmentFiledText },
     joinder: { filed_text: "" },
     party: {
       petitioner: {
         full_name: petName,
-        first: m.petitioner.firstName,
-        last: m.petitioner.lastName,
-        fka_last: m.petitioner.fkaLastName || "",
+        first: partyNameUpper(m.petitioner.firstName),
+        last: partyNameUpper(m.petitioner.lastName),
+        fka_last: partyNameUpper(m.petitioner.fkaLastName || ""),
         phone: m.petitioner.phone || "",
       },
       respondent: {
         full_name: respName,
-        first: m.respondent.firstName,
-        last: m.respondent.lastName,
-        fka_last: m.respondent.fkaLastName || "",
+        first: partyNameUpper(m.respondent.firstName),
+        last: partyNameUpper(m.respondent.lastName),
+        fka_last: partyNameUpper(m.respondent.fkaLastName || ""),
         phone: m.respondent.phone || "",
       },
     },
     member: {
       side: memberSide,
-      name_line: `${member.firstName} ${member.lastName}`,
-      display_name: displayName(member),
+      name_line: partyNameUpper(`${member.firstName} ${member.lastName}`),
+      display_name: partyNameUpper(displayName(member)),
       address_line1: partyMergeAddressLine1(member),
       address_line2: partyMergeAddressLine2(member),
       phone: member.phone || "",
@@ -172,7 +191,7 @@ export async function buildViewModel(matterId: string) {
     },
     nonmember: {
       side: memberSide === "PETITIONER" ? "RESPONDENT" : "PETITIONER",
-      display_name: displayName(nonMember),
+      display_name: partyNameUpper(displayName(nonMember)),
     },
     participant: {
       pronouns: participantPronouns,
@@ -182,8 +201,8 @@ export async function buildViewModel(matterId: string) {
       ),
     },
     altpayee: {
-      name_line: `${nonMember.firstName} ${nonMember.lastName}`,
-      display_name: displayName(nonMember),
+      name_line: partyNameUpper(`${nonMember.firstName} ${nonMember.lastName}`),
+      display_name: partyNameUpper(displayName(nonMember)),
       address_line1: partyMergeAddressLine1(nonMember),
       address_line2: partyMergeAddressLine2(nonMember),
       phone: nonMember.phone || "",
@@ -191,8 +210,8 @@ export async function buildViewModel(matterId: string) {
       ssn_full: safeDec(nonMember.ssnEnc),
     },
     /** Non-member spouse’s designated beneficiaries (e.g. CalPERS Model B). */
-    nonmember_beneficiary_rows: beneMerge.nonmember_beneficiary_rows,
-    nonmember_beneficiary: beneMerge.nonmember_beneficiary,
+    nonmember_beneficiary_rows: beneRows,
+    nonmember_beneficiary: nonmemberBeneficiaryUpper,
     /** CalPERS-specific flags from plan selection (for conditionals inside a single DOCX). */
     calpers: {
       order_model: calpersSel?.calpersOrderModel ?? "",
@@ -202,11 +221,11 @@ export async function buildViewModel(matterId: string) {
     division: { percentage_text: "Fifty Percent (50%)" },
     attorney: {
       petitioner: {
-        name: petAtt?.name || "",
+        name: partyNameUpper(petAtt?.name || ""),
         is_pro_per: petProPer,
       },
       respondent: {
-        name: respAtt?.name || "",
+        name: partyNameUpper(respAtt?.name || ""),
         is_pro_per: respProPer,
       },
     },
@@ -216,13 +235,13 @@ export async function buildViewModel(matterId: string) {
         /** Line printed at the signature for Petitioner */
         signatory_line: petProPer
           ? "Petitioner, In Pro Per"
-          : petName.toUpperCase(),
+          : petName,
       },
       respondent: {
         caption_block: respCaption,
         signatory_line: respProPer
           ? "Respondent, In Pro Per"
-          : respName.toUpperCase(),
+          : respName,
       },
     },
     preparer: { name: "Your Company", title: "QDRO Preparer" },

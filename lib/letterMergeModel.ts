@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { dec } from "@/lib/crypto";
 import { buildViewModel } from "@/lib/viewModel";
+import { formatMergeDateToday } from "@/lib/mergeFormat";
 
 function safeDec(b64?: string | null) {
   try {
@@ -33,8 +34,8 @@ export async function buildLetterMergeModel(matterId: string) {
 
   const countyDisplay =
     m.county === "Other" ? m.otherCounty || "California" : m.county;
-  const petName = partyLine(m.petitioner);
-  const respName = partyLine(m.respondent);
+  const petName = partyLine(m.petitioner).toUpperCase();
+  const respName = partyLine(m.respondent).toUpperCase();
 
   const petDob = safeDec(m.petitioner.dobEnc);
   const petSsn = safeDec(m.petitioner.ssnEnc);
@@ -62,9 +63,7 @@ export async function buildLetterMergeModel(matterId: string) {
       signer_title: "QDRO Support Specialist",
     },
     letter: {
-      date_today: new Date().toLocaleDateString("en-US", {
-        dateStyle: "long",
-      }),
+      date_today: formatMergeDateToday(),
     },
     attachment: {
       case_caption_line: `In re the case of ${m.caseNumber}`,
