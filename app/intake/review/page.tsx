@@ -27,6 +27,7 @@ export default function ReviewStep() {
       usesTimeRule: ans.usesTimeRule,
       laceraOption4: ans.laceraOption4,
       petitionerIsMember: petitionerMember,
+      petitionerSpouseType: s.petitioner.spouseType,
       calpersOrderModel: ans.calpersOrderModel,
       calpersOption3W: ans.calpersOption3W,
       calpersModelCForm: ans.calpersModelCForm,

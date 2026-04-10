@@ -14,6 +14,7 @@ export type DocFile = {
 function templateStemsForPlanRow(
   row: PlanSelection,
   petitionerIsMember: boolean,
+  petitionerSpouseType: string | null | undefined,
 ): string[] {
   const ids = pickTemplateForPlan({
     plan: row.planKey as PlanKey,
@@ -21,6 +22,7 @@ function templateStemsForPlanRow(
     usesTimeRule: row.usesTimeRule ?? undefined,
     laceraOption4: row.laceraOption4 ?? undefined,
     petitionerIsMember,
+    petitionerSpouseType,
     calpersOrderModel: (row.calpersOrderModel as "A" | "B" | "C" | undefined) ?? undefined,
     calpersOption3W: row.calpersOption3W ?? undefined,
     calpersModelCForm: (row.calpersModelCForm as "standard" | "dro" | undefined) ?? undefined,
@@ -48,6 +50,7 @@ export function groupDraftFilesByPlan(
   files: DocFile[],
   planRows: PlanSelection[],
   petitionerIsMember: boolean,
+  petitionerSpouseType?: string | null,
 ): {
   planGroups: {
     planSelectionId: string;
@@ -77,7 +80,7 @@ export function groupDraftFilesByPlan(
     planKey: row.planKey,
     label: planLabelForKey(row.planKey),
     joinderRequired: row.joinderRequired,
-    stems: templateStemsForPlanRow(row, petitionerIsMember),
+    stems: templateStemsForPlanRow(row, petitionerIsMember, petitionerSpouseType),
     files: [] as DocFile[],
   }));
 

@@ -41,6 +41,7 @@ export async function GET(
     files,
     gate.matter.plans,
     gate.matter.petitionerIsMember,
+    gate.matter.petitioner.spouseType,
   );
 
   return NextResponse.json(grouped);

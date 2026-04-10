@@ -46,8 +46,12 @@ export type TemplateId = string;
  * Replace stubs after copying converted model orders from completed cases.
  */
 export const TEMPLATE_FILES: Record<TemplateId, string> = {
-  "calpers-modA-pet-mem":
+  /** Model A, petitioner = plan member, husband petitioner (default when spouse type not Wife). */
+  "calpers-modA-pet-mem-husband":
     "calpers/CalPERS_Model_A_Hus_Pet_Mem_DUAL_IPP.docx",
+  /** Model A, petitioner = plan member, wife petitioner. */
+  "calpers-modA-pet-mem-wife":
+    "calpers/CalPERS_Model_A_Wife_Pet_Mem_DUAL_IPP.docx",
   "calpers-modA-resp-mem": "calpers/CalPERS_Model_A_Wife_Res_Mem_FULL.docx",
   "calpers-modB-pet-mem": "calpers/mod-b-petitioner-member.docx",
   "calpers-modB-resp-mem": "calpers/mod-b-respondent-member.docx",
@@ -68,6 +72,8 @@ export interface PlanTemplateInput {
   laceraOption4?: boolean;
   /** From intake: which party is the plan member. */
   petitionerIsMember: boolean;
+  /** Petitioner `spouseType` (e.g. Husband/Wife) — used to pick Model A petitioner-member variant. */
+  petitionerSpouseType?: string | null;
   /** CalPERS model order (A/B/C); required when plan is calpers. */
   calpersOrderModel?: CalpersOrderModel;
   /** CalPERS Model C: optional Option 3W (standard form only; separate template when true). */
@@ -81,8 +87,16 @@ function calpersTemplateId(
   petitionerIsMember: boolean,
   option3W: boolean,
   modelCForm: CalpersModelCForm,
+  petitionerSpouseType?: string | null,
 ): TemplateId {
   const m = model.toUpperCase();
+
+  if (m === "A" && petitionerIsMember) {
+    const st = String(petitionerSpouseType || "").trim().toLowerCase();
+    return st === "wife"
+      ? "calpers-modA-pet-mem-wife"
+      : "calpers-modA-pet-mem-husband";
+  }
 
   if (model === "C") {
     if (modelCForm === "dro") {
@@ -126,6 +140,7 @@ export function pickTemplateForPlan(input: PlanTemplateInput): TemplateId[] {
         input.petitionerIsMember,
         option3W,
         modelCForm,
+        input.petitionerSpouseType,
       ),
     ];
   }
