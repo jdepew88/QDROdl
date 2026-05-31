@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Run ON the Linode after SSH (not on Windows). From repo root on server:
-#   chmod +x scripts/deploy-server.sh
-#   ./scripts/deploy-server.sh
+# Run ON the Linode as user joe (not root/sudo). From repo root:
+#   bash scripts/deploy-server.sh
+# Or: chmod +x scripts/deploy-server.sh && ./scripts/deploy-server.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
