@@ -16,7 +16,7 @@
     "archiver": "^6.0.2",
     "bcryptjs": "^3.0.3",
     "docx-templates": "^4.12.1",
-    "next": "14.2.5",
+    "next": "^14.2.35",
     "nodemailer": "^8.0.4",
     "puppeteer": "^24.40.0",
     "react": "18.3.1",
