@@ -1,3 +1,5 @@
+const { securityHeaders } = require("./lib/securityHeaders");
+
 /** @type {import('next').NextConfig} */
 module.exports = {
   images: {
@@ -13,9 +15,17 @@ module.exports = {
     serverComponentsExternalPackages: ["archiver", "puppeteer"],
   },
   async headers() {
-    if (process.env.NODE_ENV !== "development") return [];
-    return [
-      {
+    const routes = [];
+
+    if (process.env.NODE_ENV === "production") {
+      routes.push({
+        source: "/(.*)",
+        headers: securityHeaders,
+      });
+    }
+
+    if (process.env.NODE_ENV === "development") {
+      routes.push({
         source: "/_next/static/:path*",
         headers: [
           {
@@ -23,8 +33,10 @@ module.exports = {
             value: "no-store, no-cache, must-revalidate, max-age=0",
           },
         ],
-      },
-    ];
+      });
+    }
+
+    return routes;
   },
   async redirects() {
     return [
