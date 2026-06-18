@@ -80,12 +80,6 @@ export default function Header({}: HeaderProps) {
           <a href="#pricing" className="text-base no-underline text-slate-300">
             Pricing
           </a>
-          <a
-            href="#testimonials"
-            className="text-base no-underline text-slate-300"
-          >
-            Testimonials
-          </a>
           <a href="#faq" className="text-base no-underline text-slate-300">
             FAQ
           </a>

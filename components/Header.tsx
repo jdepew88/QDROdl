@@ -199,12 +199,6 @@ export default function Header() {
           <a href="/#pricing" className="text-base no-underline text-slate-300">
             Pricing
           </a>
-          <a
-            href="/#testimonials"
-            className="text-base no-underline text-slate-300"
-          >
-            Testimonials
-          </a>
           <a href="/#faq" className="text-base no-underline text-slate-300">
             FAQ
           </a>
@@ -345,13 +339,6 @@ export default function Header() {
 
               <a href="/#pricing" className={mobileLinkClass} onClick={closeMobile}>
                 Pricing
-              </a>
-              <a
-                href="/#testimonials"
-                className={mobileLinkClass}
-                onClick={closeMobile}
-              >
-                Testimonials
               </a>
               <a href="/#faq" className={mobileLinkClass} onClick={closeMobile}>
                 FAQ

@@ -8,7 +8,6 @@ import SupportedPlansHomeSection from "./home/SupportedPlansHomeSection";
 import PricingSection from "./PricingSection";
 import TrustCredibilitySection from "./home/TrustCredibilitySection";
 import WhoItsForSection from "./home/WhoItsForSection";
-import TestimonialsSection from "./TestimonialsSection";
 import FAQSection from "./FAQSection";
 import CTASection from "./CTASection";
 
@@ -23,7 +22,6 @@ export default function QDROLandingPage() {
         <PricingSection />
         <TrustCredibilitySection />
         <WhoItsForSection />
-        <TestimonialsSection />
         <FAQSection />
         <CTASection />
       </main>
