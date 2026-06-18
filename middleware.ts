@@ -1,25 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  buildContentSecurityPolicy,
-  staticSecurityHeaders,
-} from "./lib/securityHeaders";
+import { staticSecurityHeaders } from "./lib/securityHeaders";
 
 const AUTH_COOKIE = "qdrodl_session";
 
-function createNonce() {
-  return Buffer.from(crypto.randomUUID()).toString("base64");
-}
-
-function applyProductionSecurityHeaders(
-  response: NextResponse,
-  nonce: string,
-) {
+function applyProductionSecurityHeaders(response: NextResponse) {
   if (process.env.NODE_ENV !== "production") return response;
 
-  response.headers.set(
-    "Content-Security-Policy",
-    buildContentSecurityPolicy(nonce),
-  );
   for (const { key, value } of staticSecurityHeaders) {
     response.headers.set(key, value);
   }
@@ -32,10 +18,6 @@ function requiresAuth(pathname: string) {
 }
 
 export function middleware(req: NextRequest) {
-  const nonce = createNonce();
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("x-nonce", nonce);
-
   if (requiresAuth(req.nextUrl.pathname)) {
     const token = req.cookies.get(AUTH_COOKIE)?.value;
     if (!token) {
@@ -46,14 +28,12 @@ export function middleware(req: NextRequest) {
         `${req.nextUrl.pathname}${req.nextUrl.search}`,
       );
       const redirect = NextResponse.redirect(url);
-      return applyProductionSecurityHeaders(redirect, nonce);
+      return applyProductionSecurityHeaders(redirect);
     }
   }
 
-  const response = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
-  return applyProductionSecurityHeaders(response, nonce);
+  const response = NextResponse.next();
+  return applyProductionSecurityHeaders(response);
 }
 
 export const config = {
