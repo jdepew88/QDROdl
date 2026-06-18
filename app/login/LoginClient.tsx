@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
-export default function LoginClient() {
+type Props = {
+  next?: string;
+  registered?: boolean;
+};
+
+export default function LoginClient({ next = "/dash", registered = false }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dash";
   const safeNext = useMemo(() => (next.startsWith("/") ? next : "/dash"), [next]);
-  const registered = searchParams.get("registered") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

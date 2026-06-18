@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 import { formatUsPhoneInput } from "@/lib/phoneUs";
 
-export default function RegisterClient() {
+type Props = {
+  next?: string;
+};
+
+export default function RegisterClient({ next = "/dash" }: Props) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dash";
   const safeNext = useMemo(() => (next.startsWith("/") ? next : "/dash"), [next]);
 
   const [firstName, setFirstName] = useState("");

@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-export default function VerifyEmailClient() {
-  const params = useSearchParams();
-  const token = params.get("token") || "";
+type Props = {
+  token?: string;
+};
+
+export default function VerifyEmailClient({ token = "" }: Props) {
   const hasToken = useMemo(() => token.length > 0, [token]);
 
   const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");

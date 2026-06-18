@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import LoginClient from "./LoginClient";
 
 export const metadata: Metadata = {
@@ -7,12 +6,13 @@ export const metadata: Metadata = {
   description: "Sign in to your QDROdl account.",
 };
 
-export default function LoginPage() {
-  return (
-    <Suspense
-      fallback={<main className="mx-auto max-w-md px-4 py-16 text-zinc-300">Loading...</main>}
-    >
-      <LoginClient />
-    </Suspense>
-  );
+type Props = {
+  searchParams?: { next?: string; registered?: string };
+};
+
+export default function LoginPage({ searchParams }: Props) {
+  const next = searchParams?.next || "/dash";
+  const registered = searchParams?.registered === "1";
+
+  return <LoginClient next={next} registered={registered} />;
 }
